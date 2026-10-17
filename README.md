@@ -35,3 +35,7 @@ Each tile in the Tenor section is one `<li class="gif" data-clips="sm_1,sm_2,sm_
 ## Cache busting
 
 When you change `assets/style.css` or `assets/app.js`, bump the `?v=12` on their links in `index.html` (to `?v=13` and so on) so returning visitors get the new file.
+
+## Share preview image
+
+When someone shares dionnawomack.net, apps show `img/og-image.jpg` (1200x630, the version with your photo). To use the photo-free version instead, delete `og-image.jpg` and rename `og-image-generic.jpg` to `og-image.jpg`. Apps cache previews, so a change can take a while to show; LinkedIn's Post Inspector (linkedin.com/post-inspector) forces a refresh.
