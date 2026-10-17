@@ -1,0 +1,3039 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PixelPlay - UX Learning Platform</title>
+    <script src="../../vendor/react.production.min.js"></script>
+    <script src="../../vendor/react-dom.production.min.js"></script>
+    <script src="../../vendor/babel.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --primary-purple: #8B5CF6;
+            --cyan: #06B6D4;
+            --lavender: #E9D5FF;
+            --success-green: #10B981;
+            --alert-red: #EF4444;
+            --bg-light: #F8F4FF;
+            --white: #FFFFFF;
+            --text-dark: #1F2937;
+            --text-light: #6B7280;
+        }
+
+        /* Accessible Theme Colors */
+        body.theme-sunset { --primary-purple: #FF6B6B; --cyan: #FFA500; --lavender: #FFE5D9; }
+        body.theme-ocean { --primary-purple: #06B6D4; --cyan: #3B82F6; --lavender: #DBEAFE; }
+        body.theme-forest { --primary-purple: #10B981; --cyan: #059669; --lavender: #D1FAE5; }
+        body.theme-galaxy { --primary-purple: #8B5CF6; --cyan: #EC4899; --lavender: #FCE7F3; }
+
+        body.cursor-sparkle * { cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"><text y="15" font-size="16">✨</text></svg>'), auto; }
+        body.cursor-rainbow * { cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"><text y="15" font-size="16">🌈</text></svg>'), auto; }
+        body.cursor-star * { cursor: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"><text y="15" font-size="16">⭐</text></svg>'), auto; }
+
+        body { 
+            font-family: 'DM Sans', sans-serif; 
+            background: linear-gradient(135deg, var(--bg-light) 0%, var(--lavender) 100%); 
+            min-height: 100vh; 
+            color: var(--text-dark); 
+            user-select: text;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        h1, h2, h3, button { font-family: 'Fredoka', sans-serif; }
+        #root { max-width: 1200px; margin: 0 auto; padding: 20px; padding-bottom: 100px; }
+
+        /* Page Transitions */
+        .page-transition { animation: fadeInSlide 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
+        @keyframes fadeInSlide { 
+            from { opacity: 0; transform: translateY(30px); } 
+            to { opacity: 1; transform: translateY(0); } 
+        }
+
+        /* Button Styles */
+        .btn {
+            padding: 16px 32px;
+            border-radius: 16px;
+            border: none;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            font-family: 'Fredoka', sans-serif;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+        
+        .btn:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-purple) 0%, var(--cyan) 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 8px 25px rgba(139, 92, 246, 0.4);
+        }
+        
+        .btn-primary:active { transform: scale(0.98); }
+        .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+        
+        .btn-secondary {
+            background: white;
+            color: var(--primary-purple);
+            border: 2px solid var(--primary-purple);
+        }
+        
+        .btn-secondary:hover {
+            background: var(--lavender);
+            transform: translateY(-2px);
+        }
+        
+        .btn-small { padding: 8px 16px; font-size: 14px; border-radius: 8px; }
+        
+        .card {
+            background: white;
+            border-radius: 20px;
+            padding: 24px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+        
+        .card:hover {
+            box-shadow: 0 12px 35px rgba(0, 0, 0, 0.12);
+            transform: translateY(-4px);
+        }
+
+        /* Pixie Helper - WITH IMAGE */
+        .pixie-help-btn {
+            position: fixed;
+            bottom: 120px;
+            right: 20px;
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-purple) 0%, var(--cyan) 100%);
+            border: 4px solid white;
+            cursor: pointer;
+            box-shadow: 0 6px 25px rgba(139, 92, 246, 0.4);
+            z-index: 999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            overflow: hidden;
+            animation: floatBob 3s ease-in-out infinite;
+        }
+        
+        @keyframes floatBob {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-12px); }
+        }
+        
+        .pixie-help-btn:hover {
+            transform: scale(1.15) translateY(-8px);
+            box-shadow: 0 10px 35px rgba(139, 92, 246, 0.5);
+        }
+        
+        .pixie-help-btn img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 50%;
+        }
+        
+        .pixie-bubble {
+            position: fixed;
+            bottom: 210px;
+            right: 20px;
+            background: white;
+            border-radius: 24px;
+            padding: 24px;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+            max-width: 380px;
+            z-index: 998;
+            border: 3px solid var(--cyan);
+            animation: bubbleIn 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+        
+        @keyframes bubbleIn {
+            from {
+                transform: scale(0) translateY(20px);
+                opacity: 0;
+            }
+            to {
+                transform: scale(1) translateY(0);
+                opacity: 1;
+            }
+        }
+        
+        .pixie-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        
+        .pixie-avatar-img {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            border: 3px solid var(--lavender);
+            object-fit: cover;
+        }
+        
+        .pixie-name {
+            font-weight: 700;
+            font-size: 18px;
+            color: var(--primary-purple);
+        }
+        
+        .pixie-message {
+            font-size: 15px;
+            line-height: 1.7;
+            color: var(--text-dark);
+            margin-bottom: 16px;
+            background: var(--bg-light);
+            padding: 16px;
+            border-radius: 16px;
+            border-left: 4px solid var(--primary-purple);
+        }
+        
+        .pixie-input {
+            width: 100%;
+            padding: 14px;
+            border: 2px solid var(--lavender);
+            border-radius: 14px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 15px;
+            margin-bottom: 12px;
+            transition: all 0.3s ease;
+        }
+        
+        .pixie-input:focus {
+            outline: none;
+            border-color: var(--primary-purple);
+            box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.1);
+            transform: translateY(-2px);
+        }
+
+        ::selection {
+            background: var(--lavender);
+            color: var(--primary-purple);
+        }
+
+        /* Notes Panel */
+        .notes-toggle {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            z-index: 998;
+            background: linear-gradient(135deg, var(--primary-purple) 0%, var(--cyan) 100%);
+            color: white;
+            padding: 14px 24px;
+            border-radius: 20px;
+            box-shadow: 0 4px 20px rgba(139, 92, 246, 0.3);
+            cursor: pointer;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+            border: none;
+            font-family: 'Fredoka', sans-serif;
+        }
+        
+        .notes-toggle:hover {
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 8px 30px rgba(139, 92, 246, 0.4);
+        }
+        
+        .notes-panel {
+            position: fixed;
+            top: 130px;
+            right: 20px;
+            width: 380px;
+            max-height: 520px;
+            background: white;
+            border-radius: 24px;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+            z-index: 997;
+            animation: slideInRight 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            overflow: hidden;
+            border: 3px solid var(--primary-purple);
+        }
+        
+        @keyframes slideInRight {
+            from { transform: translateX(450px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        .notes-header {
+            background: linear-gradient(135deg, var(--primary-purple) 0%, var(--cyan) 100%);
+            color: white;
+            padding: 20px;
+            font-weight: 700;
+            font-size: 18px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .notes-tabs {
+            display: flex;
+            background: var(--bg-light);
+            padding: 6px;
+            gap: 6px;
+        }
+        
+        .notes-tab {
+            flex: 1;
+            padding: 10px 16px;
+            background: transparent;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--text-light);
+            transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            font-family: 'DM Sans', sans-serif;
+        }
+        
+        .notes-tab.active {
+            background: white;
+            color: var(--primary-purple);
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
+        }
+        
+        .notes-content {
+            padding: 20px;
+            background: white;
+            min-height: 300px;
+        }
+        
+        .notes-textarea {
+            width: 100%;
+            min-height: 280px;
+            padding: 16px;
+            border: 2px solid var(--lavender);
+            border-radius: 14px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 15px;
+            color: var(--text-dark);
+            line-height: 1.7;
+            resize: vertical;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+        
+        .notes-textarea:focus {
+            border-color: var(--primary-purple);
+            box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.1);
+        }
+
+        /* Avatar Selection */
+        .avatar-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 24px;
+            margin: 40px 0;
+        }
+        
+        .avatar-option {
+            aspect-ratio: 1;
+            border-radius: 24px;
+            border: 4px solid var(--lavender);
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            background: white;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+        
+        .avatar-option::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0) 0%, rgba(6, 182, 212, 0.1) 100%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .avatar-option:hover::after {
+            opacity: 1;
+        }
+        
+        .avatar-option img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.4s ease;
+        }
+        
+        .avatar-option:hover {
+            transform: scale(1.1) rotate(-2deg);
+            border-color: var(--cyan);
+            box-shadow: 0 12px 35px rgba(6, 182, 212, 0.3);
+        }
+        
+        .avatar-option:hover img {
+            transform: scale(1.15);
+        }
+        
+        .avatar-option.selected {
+            border-color: var(--primary-purple);
+            box-shadow: 0 12px 40px rgba(139, 92, 246, 0.5);
+            transform: scale(1.1);
+            animation: pulse 2s ease-in-out infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 12px 40px rgba(139, 92, 246, 0.5); }
+            50% { box-shadow: 0 16px 50px rgba(139, 92, 246, 0.7); }
+        }
+
+        /* Wishes Counter */
+        .wishes-counter {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: white;
+            padding: 14px 24px;
+            border-radius: 20px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            z-index: 999;
+            font-weight: 700;
+            font-size: 18px;
+            color: var(--primary-purple);
+            transition: all 0.3s ease;
+        }
+        
+        .wishes-counter:hover {
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.18);
+        }
+
+        /* Dashboard */
+        .dashboard {
+            animation: fadeInSlide 0.6s ease;
+        }
+        
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        .user-avatar {
+            width: 90px;
+            height: 90px;
+            border-radius: 50%;
+            overflow: hidden;
+            box-shadow: 0 6px 20px rgba(139, 92, 246, 0.3);
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            border: 4px solid white;
+        }
+        
+        .user-avatar:hover {
+            transform: scale(1.15) rotate(8deg);
+            box-shadow: 0 10px 30px rgba(139, 92, 246, 0.4);
+        }
+        
+        .user-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .user-stats {
+            display: flex;
+            gap: 28px;
+            background: white;
+            padding: 16px 32px;
+            border-radius: 16px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+        }
+        
+        .user-stats:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+        }
+        
+        .stat {
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--primary-purple);
+        }
+        
+        .stat-label {
+            font-size: 13px;
+            color: var(--text-light);
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        /* Parent Info Page */
+        .parent-info-container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        
+        .parent-info-header {
+            background: linear-gradient(135deg, var(--primary-purple) 0%, var(--cyan) 100%);
+            color: white;
+            border-radius: 24px;
+            padding: 50px;
+            text-align: center;
+            margin-bottom: 40px;
+            box-shadow: 0 8px 30px rgba(139, 92, 246, 0.3);
+        }
+        
+        .parent-info-header h1 {
+            font-size: 42px;
+            margin-bottom: 16px;
+        }
+        
+        .parent-info-sections {
+            display: grid;
+            gap: 28px;
+        }
+        
+        .info-section {
+            background: white;
+            border-radius: 20px;
+            padding: 32px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+        }
+        
+        .info-section:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 12px 35px rgba(0, 0, 0, 0.12);
+        }
+        
+        .info-section h3 {
+            color: var(--primary-purple);
+            font-size: 24px;
+            margin-bottom: 16px;
+        }
+        
+        .info-section p {
+            line-height: 1.8;
+            color: var(--text-dark);
+            font-size: 16px;
+        }
+        
+        .feature-list {
+            display: grid;
+            gap: 16px;
+            margin-top: 20px;
+        }
+        
+        .feature-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+            padding: 16px;
+            background: var(--bg-light);
+            border-radius: 14px;
+            transition: all 0.3s ease;
+        }
+        
+        .feature-item:hover {
+            transform: translateX(8px);
+            background: var(--lavender);
+        }
+        
+        .feature-icon {
+            font-size: 28px;
+            flex-shrink: 0;
+        }
+
+        /* Profile Page */
+        .profile-container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        
+        .profile-header {
+            background: linear-gradient(135deg, var(--primary-purple) 0%, var(--cyan) 100%);
+            color: white;
+            border-radius: 24px;
+            padding: 50px;
+            text-align: center;
+            margin-bottom: 32px;
+            box-shadow: 0 8px 30px rgba(139, 92, 246, 0.3);
+        }
+        
+        .profile-avatar-large {
+            width: 160px;
+            height: 160px;
+            border-radius: 50%;
+            border: 6px solid white;
+            margin: 0 auto 24px;
+            overflow: hidden;
+            transition: all 0.4s ease;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+        }
+        
+        .profile-avatar-large:hover {
+            transform: scale(1.08) rotate(5deg);
+            box-shadow: 0 12px 35px rgba(0, 0, 0, 0.3);
+        }
+        
+        .profile-avatar-large img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .profile-sections {
+            display: grid;
+            gap: 28px;
+        }
+        
+        .profile-section {
+            background: white;
+            border-radius: 20px;
+            padding: 32px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+        
+        .profile-section:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 12px 35px rgba(0, 0, 0, 0.12);
+        }
+        
+        .profile-section h3 {
+            font-size: 24px;
+            color: var(--primary-purple);
+            margin-bottom: 20px;
+        }
+        
+        .badge-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+            gap: 18px;
+            margin-top: 20px;
+        }
+        
+        .badge-item {
+            text-align: center;
+            padding: 20px;
+            border-radius: 16px;
+            background: var(--bg-light);
+            transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            cursor: pointer;
+        }
+        
+        .badge-item:hover {
+            transform: translateY(-6px) scale(1.05);
+        }
+        
+        .badge-item.unlocked {
+            background: linear-gradient(135deg, var(--lavender) 0%, #DDD6FE 100%);
+            border: 3px solid var(--primary-purple);
+            animation: badgeUnlock 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+        
+        @keyframes badgeUnlock {
+            0% { transform: scale(0) rotate(-180deg); }
+            60% { transform: scale(1.2) rotate(15deg); }
+            100% { transform: scale(1) rotate(0deg); }
+        }
+        
+        .badge-item.locked {
+            opacity: 0.5;
+            filter: grayscale(100%);
+        }
+        
+        .badge-emoji {
+            font-size: 42px;
+            margin-bottom: 10px;
+            display: block;
+            transition: transform 0.3s ease;
+        }
+        
+        .badge-item:hover .badge-emoji {
+            transform: scale(1.2) rotate(10deg);
+        }
+        
+        .badge-name {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--text-dark);
+        }
+
+        /* Parent Dashboard */
+        .parent-controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 28px;
+        }
+        
+        .control-card {
+            background: white;
+            border-radius: 20px;
+            padding: 28px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+        
+        .control-card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 12px 35px rgba(0, 0, 0, 0.14);
+        }
+        
+        .control-card h3 {
+            color: var(--primary-purple);
+            font-size: 22px;
+            margin-bottom: 20px;
+        }
+        
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 56px;
+            height: 28px;
+        }
+        
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            border-radius: 28px;
+        }
+        
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 22px;
+            width: 22px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            border-radius: 50%;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        input:checked + .slider {
+            background: linear-gradient(135deg, var(--primary-purple) 0%, var(--cyan) 100%);
+        }
+        
+        input:checked + .slider:before {
+            transform: translateX(28px);
+        }
+        
+        .progress-chart {
+            background: var(--bg-light);
+            border-radius: 16px;
+            padding: 24px;
+            margin-top: 20px;
+        }
+        
+        .progress-bar {
+            height: 24px;
+            background: var(--lavender);
+            border-radius: 12px;
+            overflow: hidden;
+            margin: 10px 0;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, var(--primary-purple) 0%, var(--cyan) 100%);
+            transition: width 1s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            box-shadow: 0 0 10px rgba(139, 92, 246, 0.5);
+        }
+
+        /* Games Grid */
+        .games-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 28px;
+        }
+        
+        .game-card {
+            background: white;
+            border-radius: 24px;
+            padding: 28px;
+            cursor: pointer;
+            border: 4px solid transparent;
+            transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .game-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 6px;
+            background: linear-gradient(90deg, var(--primary-purple), var(--cyan));
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .game-card:hover::before {
+            opacity: 1;
+        }
+        
+        .game-card:hover:not(.locked) {
+            transform: translateY(-12px) rotate(-1deg);
+            border-color: var(--cyan);
+            box-shadow: 0 20px 50px rgba(6, 182, 212, 0.25);
+        }
+        
+        .game-card.locked {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        .game-card.completed {
+            border-color: var(--success-green);
+        }
+        
+        .game-card.completed::before {
+            background: var(--success-green);
+            opacity: 1;
+        }
+        
+        .game-emoji {
+            font-size: 56px;
+            margin-bottom: 18px;
+            display: inline-block;
+            transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+        
+        .game-card:hover .game-emoji {
+            transform: scale(1.3) rotate(15deg);
+        }
+        
+        .game-title {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            color: var(--text-dark);
+        }
+        
+        .game-desc {
+            color: var(--text-light);
+            font-size: 15px;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+        
+        .game-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .game-tag {
+            padding: 8px 16px;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 700;
+            transition: all 0.3s ease;
+        }
+        
+        .game-tag:hover {
+            transform: scale(1.08);
+        }
+        
+        .tag-easy {
+            background: #D1FAE5;
+            color: #065F46;
+        }
+        
+        .tag-medium {
+            background: #FEF3C7;
+            color: #92400E;
+        }
+        
+        .tag-hard {
+            background: #FEE2E2;
+            color: #991B1B;
+        }
+
+        /* Welcome Screen */
+        .welcome-screen {
+            text-align: center;
+            padding: 70px 20px;
+            animation: fadeInSlide 0.8s ease;
+        }
+        
+        .logo {
+            font-size: 80px;
+            margin-bottom: 20px;
+            animation: floatBob 3s ease-in-out infinite;
+        }
+        
+        .welcome-title {
+            font-size: 56px;
+            background: linear-gradient(135deg, var(--primary-purple) 0%, var(--cyan) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 20px;
+            animation: fadeInSlide 1s ease 0.2s both;
+        }
+        
+        .welcome-subtitle {
+            font-size: 26px;
+            color: var(--text-light);
+            margin-bottom: 56px;
+            animation: fadeInSlide 1.2s ease 0.4s both;
+        }
+        
+        .form-group {
+            margin-bottom: 28px;
+            text-align: left;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 700;
+            color: var(--text-dark);
+            font-size: 16px;
+        }
+        
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 18px;
+            border: 3px solid var(--lavender);
+            border-radius: 14px;
+            font-size: 17px;
+            font-family: 'DM Sans', sans-serif;
+            transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            background: white;
+        }
+        
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: var(--primary-purple);
+            box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.15);
+            transform: translateY(-3px);
+        }
+
+        /* Shop */
+        .shop-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+            gap: 28px;
+        }
+        
+        .shop-item {
+            background: white;
+            border-radius: 20px;
+            padding: 24px;
+            border: 3px solid var(--lavender);
+            transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            text-align: center;
+        }
+        
+        .shop-item:hover {
+            border-color: var(--cyan);
+            transform: translateY(-10px) scale(1.03);
+            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.18);
+        }
+        
+        .shop-item.owned {
+            border-color: var(--success-green);
+            opacity: 0.85;
+        }
+        
+        .shop-item-icon {
+            font-size: 56px;
+            margin-bottom: 16px;
+            transition: transform 0.4s ease;
+            display: inline-block;
+        }
+        
+        .shop-item:hover .shop-item-icon {
+            transform: scale(1.3) rotate(15deg);
+        }
+        
+        .shop-item-name {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            color: var(--text-dark);
+        }
+        
+        .shop-item-desc {
+            font-size: 15px;
+            color: var(--text-light);
+            margin-bottom: 18px;
+            line-height: 1.5;
+        }
+        
+        .shop-item-price {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--primary-purple);
+            margin-bottom: 18px;
+        }
+
+        /* Library */
+        .library-filters {
+            display: flex;
+            gap: 14px;
+            margin-bottom: 32px;
+            flex-wrap: wrap;
+        }
+        
+        .filter-btn {
+            padding: 12px 24px;
+            border-radius: 14px;
+            border: 3px solid var(--lavender);
+            background: white;
+            cursor: pointer;
+            font-weight: 700;
+            font-family: 'Fredoka', sans-serif;
+            font-size: 16px;
+            transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+        
+        .filter-btn:hover {
+            transform: translateY(-3px);
+            border-color: var(--cyan);
+            box-shadow: 0 6px 20px rgba(6, 182, 212, 0.2);
+        }
+        
+        .filter-btn.active {
+            background: var(--primary-purple);
+            color: white;
+            border-color: var(--primary-purple);
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(139, 92, 246, 0.3);
+        }
+
+        /* Game Specific Styles */
+        .style-preview {
+            background: white;
+            border-radius: 20px;
+            padding: 48px;
+            margin-bottom: 36px;
+            box-shadow: 0 10px 35px rgba(0, 0, 0, 0.12);
+            min-height: 450px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.4s ease;
+        }
+        
+        .style-preview:hover {
+            box-shadow: 0 16px 50px rgba(0, 0, 0, 0.18);
+            transform: translateY(-4px);
+        }
+        
+        .preview-canvas {
+            width: 100%;
+            max-width: 550px;
+            padding: 48px;
+            border-radius: 16px;
+            transition: all 0.4s ease;
+        }
+        
+        .preview-title {
+            font-size: 36px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+        }
+        
+        .preview-text {
+            font-size: 17px;
+            line-height: 1.7;
+            margin-bottom: 28px;
+            transition: all 0.3s ease;
+        }
+        
+        .preview-button {
+            padding: 14px 28px;
+            border-radius: 12px;
+            font-weight: 700;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 16px;
+        }
+        
+        .preview-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+        }
+        
+        .styling-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+            gap: 28px;
+        }
+        
+        .styling-category {
+            background: white;
+            border-radius: 20px;
+            padding: 24px;
+            box-shadow: 0 6px 25px rgba(0, 0, 0, 0.1);
+            transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+        
+        .styling-category:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 12px 35px rgba(0, 0, 0, 0.14);
+        }
+        
+        .styling-category h4 {
+            color: var(--primary-purple);
+            font-size: 20px;
+            margin-bottom: 18px;
+        }
+        
+        .style-options-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(65px, 1fr));
+            gap: 10px;
+        }
+        
+        .style-option {
+            aspect-ratio: 1;
+            border-radius: 10px;
+            border: 3px solid var(--lavender);
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 700;
+        }
+        
+        .style-option:hover {
+            transform: scale(1.2) rotate(5deg);
+            border-color: var(--cyan);
+            box-shadow: 0 6px 20px rgba(6, 182, 212, 0.3);
+        }
+        
+        .style-option.selected {
+            border-color: var(--primary-purple);
+            box-shadow: 0 6px 20px rgba(139, 92, 246, 0.4);
+            transform: scale(1.2);
+        }
+        
+        .color-swatch {
+            width: 100%;
+            height: 100%;
+            border-radius: 8px;
+        }
+
+        /* Page Builder */
+        .builder-container {
+            display: grid;
+            grid-template-columns: 270px 1fr;
+            gap: 28px;
+            margin-top: 32px;
+        }
+        
+        .elements-panel {
+            background: white;
+            border-radius: 20px;
+            padding: 24px;
+            box-shadow: 0 6px 25px rgba(0, 0, 0, 0.1);
+            height: fit-content;
+            position: sticky;
+            top: 20px;
+        }
+        
+        .elements-panel h4 {
+            font-size: 20px;
+            color: var(--primary-purple);
+            margin-bottom: 18px;
+        }
+        
+        .element-item {
+            padding: 14px;
+            border-radius: 14px;
+            border: 3px solid var(--lavender);
+            margin-bottom: 14px;
+            cursor: grab;
+            transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+        }
+        
+        .element-item:hover {
+            border-color: var(--cyan);
+            transform: translateX(10px) scale(1.04);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+        }
+        
+        .element-item:active {
+            cursor: grabbing;
+            transform: scale(0.98);
+        }
+        
+        .canvas {
+            background: white;
+            border-radius: 20px;
+            padding: 48px;
+            min-height: 650px;
+            box-shadow: 0 6px 25px rgba(0, 0, 0, 0.1);
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        
+        .canvas:hover {
+            box-shadow: 0 10px 35px rgba(0, 0, 0, 0.14);
+        }
+        
+        .placed-element {
+            padding: 24px;
+            border-radius: 14px;
+            margin-bottom: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: move;
+            transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            animation: slideIn 0.4s ease;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        .placed-element:hover {
+            transform: translateX(10px) scale(1.02);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+        }
+        
+        .remove-btn {
+            background: var(--alert-red);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 8px 16px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 700;
+            transition: all 0.3s ease;
+        }
+        
+        .remove-btn:hover {
+            background: #DC2626;
+            transform: scale(1.08);
+        }
+
+        /* Interview Detective */
+        .suspects-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 24px;
+            margin: 32px 0;
+        }
+        
+        .suspect-card {
+            background: white;
+            border-radius: 20px;
+            padding: 28px;
+            border: 4px solid var(--lavender);
+            cursor: pointer;
+            transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            text-align: center;
+        }
+        
+        .suspect-card:hover {
+            border-color: var(--cyan);
+            transform: translateY(-12px) scale(1.04);
+            box-shadow: 0 16px 45px rgba(0, 0, 0, 0.18);
+        }
+        
+        .suspect-card.selected {
+            border-color: var(--primary-purple);
+            box-shadow: 0 12px 40px rgba(139, 92, 246, 0.4);
+            transform: translateY(-12px) scale(1.04);
+        }
+        
+        .suspect-preview {
+            font-size: 72px;
+            margin-bottom: 20px;
+            transition: transform 0.4s ease;
+            display: inline-block;
+        }
+        
+        .suspect-card:hover .suspect-preview {
+            transform: scale(1.3) rotate(15deg);
+        }
+        
+        .suspect-card h4 {
+            font-size: 20px;
+            margin-bottom: 10px;
+            color: var(--text-dark);
+        }
+        
+        .suspect-card p {
+            font-size: 15px;
+            color: var(--text-light);
+            line-height: 1.5;
+        }
+
+        /* Color Combos */
+        .color-wheel {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 16px;
+            margin: 32px 0;
+        }
+        
+        .color-chip {
+            aspect-ratio: 1;
+            border-radius: 16px;
+            cursor: pointer;
+            transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            border: 4px solid transparent;
+        }
+        
+        .color-chip:hover {
+            transform: scale(1.2);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+        }
+        
+        .color-chip.selected {
+            border-color: white;
+            box-shadow: 0 12px 35px rgba(0,0,0,0.35);
+            transform: scale(1.2);
+        }
+        
+        .selected-palette {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin: 32px 0;
+        }
+        
+        .palette-slot {
+            width: 90px;
+            height: 90px;
+            border-radius: 18px;
+            border: 4px dashed var(--lavender);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-light);
+            font-size: 36px;
+            font-weight: 700;
+            transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            cursor: pointer;
+        }
+        
+        .palette-slot:hover {
+            transform: scale(1.08);
+        }
+        
+        .palette-slot.filled {
+            border-style: solid;
+            border-color: var(--primary-purple);
+            animation: slotFill 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+        
+        @keyframes slotFill {
+            from {
+                transform: scale(0) rotate(-180deg);
+            }
+            to {
+                transform: scale(1) rotate(0deg);
+            }
+        }
+
+        /* Bottom Nav */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            box-shadow: 0 -6px 30px rgba(0, 0, 0, 0.12);
+            padding: 14px 0;
+            z-index: 100;
+        }
+        
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-around;
+        }
+        
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            cursor: pointer;
+            padding: 10px 20px;
+            border-radius: 14px;
+            transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            color: var(--text-light);
+            position: relative;
+        }
+        
+        .nav-item::before {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary-purple), var(--cyan));
+            transition: width 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            border-radius: 4px 4px 0 0;
+        }
+        
+        .nav-item:hover,
+        .nav-item.active {
+            background: var(--lavender);
+            color: var(--primary-purple);
+            transform: translateY(-6px);
+        }
+        
+        .nav-item.active::before {
+            width: 70%;
+        }
+        
+        .nav-icon {
+            font-size: 26px;
+            transition: transform 0.3s ease;
+        }
+        
+        .nav-item:hover .nav-icon {
+            transform: scale(1.3);
+        }
+        
+        .nav-label {
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .welcome-title { font-size: 40px; }
+            .games-grid { grid-template-columns: 1fr; }
+            .notes-panel { width: 92%; right: 4%; }
+            .avatar-grid { grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); }
+            .builder-container { grid-template-columns: 1fr; }
+            .elements-panel { position: relative; }
+            .parent-controls { grid-template-columns: 1fr; }
+            .pixie-bubble { width: 90%; right: 5%; }
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // Design Terminology Dictionary - Canned Definitions
+        const DESIGN_TERMS = {
+            'ux': 'User Experience - How a person feels when using a product or service. It includes ease of use, accessibility, and overall satisfaction.',
+            'ui': 'User Interface - The visual elements users interact with, like buttons, menus, and layouts.',
+            'typography': 'The art of arranging text to make it readable, appealing, and effective for communication.',
+            'hierarchy': 'Organizing content by importance to guide users\' attention from most to least important elements.',
+            'color theory': 'Understanding how colors work together, affect emotions, and create visual harmony in designs.',
+            'wireframe': 'A basic visual guide showing the structure and layout of a page before adding visual design.',
+            'prototype': 'An early sample or model built to test ideas and concepts before final development.',
+            'accessibility': 'Designing so everyone, including people with disabilities, can use and understand your product.',
+            'layout': 'The arrangement of visual elements on a page to create structure and organization.',
+            'contrast': 'The difference between elements (like colors or sizes) that makes them stand out from each other.',
+            'palette': 'A selection of colors used consistently throughout a design.',
+            'font': 'A set of printable or displayable text characters in a specific style and size.',
+            'design': 'The process of planning and creating visual or functional solutions to problems.',
+            'user research': 'Studying users\' needs, behaviors, and motivations to inform design decisions.',
+            'empathy': 'Understanding and sharing the feelings of users to create better experiences for them.'
+        };
+
+        // Avatar options
+        const PRESET_AVATARS = [
+            { id: 'avatar1', name: 'Maya', file: 'model1.png' },
+            { id: 'avatar2', name: 'Zoe', file: 'model2.png' },
+            { id: 'avatar3', name: 'Sam', file: 'model3.png' },
+            { id: 'avatar4', name: 'Riley', file: 'model4.png' },
+            { id: 'avatar5', name: 'Luna', file: 'model5.png' },
+            { id: 'avatar6', name: 'Cosmo', file: 'model6.png' },
+            { id: 'avatar7', name: 'Byte', file: 'model7.png' },
+            { id: 'avatar8', name: 'Fluffy', file: 'model8.png' }
+        ];
+
+        const PIXIE_HELPER = { id: 'pixie', name: 'Pixie', file: 'pixie_model_.png' };
+
+        // [Data constants - CLIENT_SCENARIOS, GAMES_DATA, etc. - continuing in next message due to length...]
+        const CLIENT_SCENARIOS = [
+            {
+                id: 'bakery',
+                name: "Maya's Bakery",
+                description: "Maya runs a cozy neighborhood bakery and wants a website that feels warm, welcoming, and sweet!",
+                idealColors: { bg: '#FFF5ED', primary: '#FF6B6B', text: '#2D2424' },
+                idealFont: 'display',
+                idealLayout: 'centered'
+            },
+            {
+                id: 'tech',
+                name: "CodeCraft Studio",
+                description: "A modern tech startup needs a sleek, professional website that shows they're innovative and trustworthy.",
+                idealColors: { bg: '#FFFFFF', primary: '#3B82F6', text: '#1F2937' },
+                idealFont: 'sans',
+                idealLayout: 'left'
+            },
+            {
+                id: 'eco',
+                name: "Green Earth Shop",
+                description: "An eco-friendly store wants a natural, calming design that makes customers think of nature.",
+                idealColors: { bg: '#F0FDF4', primary: '#10B981', text: '#064E3B' },
+                idealFont: 'serif',
+                idealLayout: 'centered'
+            }
+        ];
+
+        const PAGE_BUILDER_ELEMENTS = [
+            { id: 'header', name: 'Header', icon: '📰', color: '#8B5CF6' },
+            { id: 'hero', name: 'Hero Image', icon: '🖼️', color: '#06B6D4' },
+            { id: 'text', name: 'Text Block', icon: '📝', color: '#6B7280' },
+            { id: 'image', name: 'Image', icon: '🌄', color: '#10B981' },
+            { id: 'button', name: 'Button', icon: '🔘', color: '#F59E0B' },
+            { id: 'form', name: 'Contact Form', icon: '📋', color: '#EF4444' },
+            { id: 'gallery', name: 'Gallery', icon: '🎨', color: '#EC4899' },
+            { id: 'footer', name: 'Footer', icon: '📍', color: '#64748B' }
+        ];
+
+        const PAGE_BUILDER_SCENARIOS = [
+            {
+                id: 1,
+                client: { name: 'Alex', avatar: '📸', role: 'Photographer' },
+                brief: "I need a portfolio website to showcase my photography work to potential clients.",
+                requirements: [
+                    { text: 'Large hero image to showcase best work', icon: '🖼️', element: 'hero' },
+                    { text: 'Gallery to display photo collections', icon: '🎨', element: 'gallery' },
+                    { text: 'Contact form for booking inquiries', icon: '📧', element: 'form' }
+                ],
+                mustHave: ['hero', 'gallery', 'form'],
+                niceToHave: ['header', 'text', 'footer']
+            },
+            {
+                id: 2,
+                client: { name: 'Rosa', avatar: '🍕', role: 'Restaurant Owner' },
+                brief: "I need a website for my Italian restaurant so customers can see our menu and place orders.",
+                requirements: [
+                    { text: 'Menu display with photos', icon: '📋', element: 'text' },
+                    { text: 'Image gallery of dishes', icon: '🌄', element: 'gallery' },
+                    { text: 'Contact information', icon: '📍', element: 'footer' }
+                ],
+                mustHave: ['text', 'gallery', 'footer'],
+                niceToHave: ['header', 'hero', 'button']
+            }
+        ];
+
+        const DETECTIVE_SCENARIOS = [
+            {
+                id: 1,
+                client: { name: 'Dr. Chen', avatar: '📚', role: 'Professor' },
+                brief: "I need a professional website for my online courses.",
+                requirements: [
+                    { text: 'Professional and trustworthy feel', icon: '🎓' },
+                    { text: 'Easy navigation for students', icon: '🧭' },
+                    { text: 'Clear course information', icon: '📖' }
+                ],
+                suspects: [
+                    {
+                        id: 'A',
+                        name: 'Design A',
+                        preview: '📘',
+                        description: 'Clean blue design with clear sections',
+                        isCorrect: true
+                    },
+                    {
+                        id: 'B',
+                        name: 'Design B',
+                        preview: '🎨',
+                        description: 'Bright rainbow colors with fun illustrations',
+                        isCorrect: false,
+                        feedback: "This design is too playful for a professional course website. Dr. Chen needs something more trustworthy!"
+                    },
+                    {
+                        id: 'C',
+                        name: 'Design C',
+                        preview: '⚡',
+                        description: 'Dark theme with neon accents',
+                        isCorrect: false,
+                        feedback: "While modern, this design feels too edgy for an educational platform. Students need clarity!"
+                    },
+                    {
+                        id: 'D',
+                        name: 'Design D',
+                        preview: '🌸',
+                        description: 'Very minimal with lots of white space',
+                        isCorrect: false,
+                        feedback: "Too minimal! Dr. Chen needs clear structure to organize course materials effectively."
+                    }
+                ]
+            }
+        ];
+
+        const COLOR_CHALLENGES = [
+            {
+                id: 1,
+                type: 'complementary',
+                instruction: 'Build a Complementary palette (opposite colors on color wheel)',
+                colors: ['#FF6B6B', '#4ECDC4', '#FFD93D', '#6C5CE7', '#00D2FF', '#FF6B9D'],
+                correctPairs: [['#FF6B6B', '#4ECDC4'], ['#FFD93D', '#6C5CE7']],
+                slotsNeeded: 2
+            },
+            {
+                id: 2,
+                type: 'analogous',
+                instruction: 'Build an Analogous palette (3 colors next to each other)',
+                colors: ['#FF6B6B', '#FF8E53', '#FFA500', '#4ECDC4', '#06B6D4', '#3B82F6'],
+                correctSet: ['#FF6B6B', '#FF8E53', '#FFA500'],
+                slotsNeeded: 3
+            },
+            {
+                id: 3,
+                type: 'triadic',
+                instruction: 'Build a Triadic palette (3 colors evenly spaced)',
+                colors: ['#FF6B6B', '#FFD93D', '#4ECDC4', '#8B5CF6', '#FF6B9D', '#10B981'],
+                correctSet: ['#FF6B6B', '#FFD93D', '#4ECDC4'],
+                slotsNeeded: 3
+            }
+        ];
+
+        const SHOP_ITEMS = {
+            themes: [
+                { id: 'theme-sunset', name: 'Sunset Glow', description: 'Warm oranges and pinks', price: 200, category: 'theme', className: 'theme-sunset', icon: '🌅' },
+                { id: 'theme-ocean', name: 'Ocean Breeze', description: 'Cool blues and teals', price: 200, category: 'theme', className: 'theme-ocean', icon: '🌊' },
+                { id: 'theme-forest', name: 'Forest Fresh', description: 'Natural greens', price: 200, category: 'theme', className: 'theme-forest', icon: '🌲' },
+                { id: 'theme-galaxy', name: 'Galaxy Dream', description: 'Purple and pink cosmos', price: 200, category: 'theme', className: 'theme-galaxy', icon: '🌌' }
+            ],
+            powerups: [
+                { id: 'extra-wish', name: 'Extra Wish', description: '+1 wish for your next game', price: 150, category: 'powerup', icon: '⭐' },
+                { id: 'coin-boost', name: '2x Coin Boost', description: 'Double coins for 3 games', price: 250, category: 'powerup', icon: '💰' },
+                { id: 'hint-pack', name: 'Hint Pack', description: '5 free hints to use anytime', price: 100, category: 'powerup', icon: '💡' }
+            ],
+            cursorEffects: [
+                { id: 'cursor-sparkle', name: 'Sparkle Trail', description: 'Sparkles follow your cursor', price: 100, category: 'cursor', icon: '✨', className: 'cursor-sparkle' },
+                { id: 'cursor-rainbow', name: 'Rainbow Path', description: 'Rainbow trail effect', price: 100, category: 'cursor', icon: '🌈', className: 'cursor-rainbow' },
+                { id: 'cursor-star', name: 'Star Burst', description: 'Stars appear as you move', price: 100, category: 'cursor', icon: '⭐', className: 'cursor-star' }
+            ]
+        };
+
+        const GAMES_DATA = [
+            { id: 'palette-perfect', title: 'Palette Perfect', description: 'Design for real clients by choosing perfect colors, fonts, and layouts', category: 'Color', emoji: '🎨', duration: '8 min', difficulty: 'Medium', unlocked: true, ageMin: 6, coinsReward: 50 },
+            { id: 'page-builder', title: 'Page Builder Pro', description: 'Build websites for clients by dragging and dropping elements', category: 'Strategy', emoji: '🏗️', duration: '10 min', difficulty: 'Hard', unlocked: true, ageMin: 10, coinsReward: 75 },
+            { id: 'interview-detective', title: 'Interview Detective', description: 'Match website designs to client requirements', category: 'Research', emoji: '🕵️', duration: '7 min', difficulty: 'Medium', unlocked: true, ageMin: 10, coinsReward: 50 },
+            { id: 'color-combos', title: 'Palette Puzzle', description: 'Build harmonious color schemes using color theory', category: 'Color', emoji: '🌈', duration: '5 min', difficulty: 'Easy', unlocked: true, ageMin: 6, coinsReward: 35 }
+        ];
+
+        const INITIAL_BADGES = [
+            { id: 1, name: 'First Steps', emoji: '👟', unlocked: false },
+            { id: 2, name: 'Color Pro', emoji: '🎨', unlocked: false },
+            { id: 3, name: 'Sharp Eye', emoji: '👁️', unlocked: false },
+            { id: 4, name: 'Creative Mind', emoji: '💡', unlocked: false },
+            { id: 5, name: 'Design Hero', emoji: '🦸‍♀️', unlocked: false },
+            { id: 6, name: 'Streak Master', emoji: '🔥', unlocked: false },
+            { id: 7, name: 'Story Complete', emoji: '📖', unlocked: false },
+            { id: 8, name: 'Wishful Thinker', emoji: '⭐', unlocked: false },
+            { id: 9, name: 'Builder Master', emoji: '🏗️', unlocked: false },
+            { id: 10, name: 'Detective', emoji: '🕵️', unlocked: false }
+        ];
+
+        function App() {
+            const [screen, setScreen] = useState('welcome');
+            const [user, setUser] = useState(null);
+            const [selectedAvatar, setSelectedAvatar] = useState(null);
+            const [activeNav, setActiveNav] = useState('home');
+            const [coins, setCoins] = useState(100);
+            const [wishes, setWishes] = useState(3);
+            const [gamesCompleted, setGamesCompleted] = useState([]);
+            const [currentGame, setCurrentGame] = useState(null);
+            const [activeTheme, setActiveTheme] = useState(null);
+            const [activeCursor, setActiveCursor] = useState(null);
+            const [ownedItems, setOwnedItems] = useState([]);
+            const [badges, setBadges] = useState(INITIAL_BADGES);
+            const [libraryFilter, setLibraryFilter] = useState('all');
+            
+            const [showNotes, setShowNotes] = useState(false);
+            const [activeNoteTab, setActiveNoteTab] = useState('current');
+            const [gameNotes, setGameNotes] = useState({});
+
+            const [showPixieBubble, setShowPixieBubble] = useState(false);
+            const [pixieMessage, setPixieMessage] = useState('');
+            const [helpInput, setHelpInput] = useState('');
+
+            const [parentControls, setParentControls] = useState({
+                timeLimit: true,
+                soundEnabled: true,
+                progressReports: true,
+                dailyLimit: 60
+            });
+
+            const [currentScenario, setCurrentScenario] = useState(0);
+            const [selectedColors, setSelectedColors] = useState({ bg: '#FFFFFF', primary: '#8B5CF6', text: '#1F2937' });
+            const [selectedFont, setSelectedFont] = useState('sans');
+            const [selectedLayout, setSelectedLayout] = useState('centered');
+            const [builderScenario, setBuilderScenario] = useState(0);
+            const [placedElements, setPlacedElements] = useState([]);
+            const [detectiveScenario, setDetectiveScenario] = useState(0);
+            const [selectedSuspect, setSelectedSuspect] = useState(null);
+            const [colorChallenge, setColorChallenge] = useState(0);
+            const [selectedPalette, setSelectedPalette] = useState([]);
+
+            // Apply theme and cursor
+            useEffect(() => {
+                document.body.className = '';
+                if (activeTheme) {
+                    const themeItem = SHOP_ITEMS.themes.find(t => t.id === activeTheme);
+                    if (themeItem) {
+                        document.body.classList.add(themeItem.className);
+                    }
+                }
+                if (activeCursor) {
+                    document.body.classList.add(activeCursor);
+                }
+            }, [activeTheme, activeCursor]);
+
+            // Text selection for design terms
+            useEffect(() => {
+                const handleSelection = () => {
+                    const selectedText = window.getSelection().toString().trim().toLowerCase();
+                    if (selectedText && selectedText.length > 0) {
+                        const matchedTerm = Object.keys(DESIGN_TERMS).find(term => 
+                            selectedText.includes(term.toLowerCase())
+                        );
+                        
+                        if (matchedTerm) {
+                            setHelpInput(matchedTerm);
+                            setTimeout(() => {
+                                showPixieHelp(DESIGN_TERMS[matchedTerm]);
+                            }, 200);
+                        }
+                    }
+                };
+
+                document.addEventListener('mouseup', handleSelection);
+                return () => document.removeEventListener('mouseup', handleSelection);
+            }, []);
+
+            const showPixieHelp = (message) => {
+                setPixieMessage(message);
+                setShowPixieBubble(true);
+            };
+
+            const addCoins = (amount) => {
+                setCoins(prev => prev + amount);
+                showPixieHelp(`Amazing! You earned ${amount} coins! 🪙`);
+            };
+
+            const purchaseItem = (item) => {
+                if (coins >= item.price && !ownedItems.includes(item.id)) {
+                    setCoins(prev => prev - item.price);
+                    setOwnedItems(prev => [...prev, item.id]);
+                    
+                    // Apply immediately on purchase
+                    if (item.category === 'theme') {
+                        setActiveTheme(item.id);
+                        showPixieHelp(`${item.name} theme activated! Your app looks amazing! ✨`);
+                    } else if (item.category === 'cursor') {
+                        setActiveCursor(item.className);
+                        showPixieHelp(`${item.name} is now active! Move your cursor around! ✨`);
+                    } else {
+                        showPixieHelp(`You got ${item.name}! ✨`);
+                    }
+                    
+                    return true;
+                }
+                return false;
+            };
+
+            const completeGame = (gameId) => {
+                const game = GAMES_DATA.find(g => g.id === gameId);
+                if (game && !gamesCompleted.includes(gameId)) {
+                    addCoins(game.coinsReward);
+                    setGamesCompleted(prev => [...prev, gameId]);
+                    
+                    if (gamesCompleted.length === 0) {
+                        setBadges(prev => prev.map(b => b.id === 1 ? {...b, unlocked: true} : b));
+                    }
+                }
+            };
+
+            // Components continue in next part...
+            // Components
+            const PixieUniversalHelper = () => {
+                return (
+                    <>
+                        <div className="pixie-help-btn" onClick={() => {
+                            setShowPixieBubble(!showPixieBubble);
+                            if (!showPixieBubble) {
+                                showPixieHelp("Hi! I'm Pixie, your UX guide! 👋 Highlight any design word like UX, Typography, or Layout and I'll explain it!");
+                            }
+                        }}>
+                            <img 
+                                src={PIXIE_HELPER.file} 
+                                alt="Pixie Helper" 
+                                onError={(e) => {
+                                    e.target.style.display = 'none';
+                                    e.target.parentElement.innerHTML = '<div style="font-size: 36px;">✨</div>';
+                                }}
+                            />
+                        </div>
+                        
+                        {showPixieBubble && (
+                            <div className="pixie-bubble">
+                                <div className="pixie-header">
+                                    <img 
+                                        src={PIXIE_HELPER.file} 
+                                        className="pixie-avatar-img" 
+                                        alt="Pixie" 
+                                        onError={(e) => e.target.style.display = 'none'}
+                                    />
+                                    <span className="pixie-name">Pixie</span>
+                                </div>
+                                <div className="pixie-message">{pixieMessage}</div>
+                                <input 
+                                    type="text" 
+                                    className="pixie-input" 
+                                    placeholder="Ask about design terms..."
+                                    value={helpInput}
+                                    onChange={(e) => setHelpInput(e.target.value)}
+                                    onKeyPress={(e) => {
+                                        if (e.key === 'Enter' && helpInput) {
+                                            const term = helpInput.toLowerCase();
+                                            if (DESIGN_TERMS[term]) {
+                                                showPixieHelp(DESIGN_TERMS[term]);
+                                            } else {
+                                                showPixieHelp("I can explain design terms like: UX, UI, Typography, Layout, Color Theory, Hierarchy, and more! Try asking about one!");
+                                            }
+                                        }
+                                    }}
+                                />
+                                <button 
+                                    className="btn btn-small btn-secondary" 
+                                    style={{ width: '100%' }} 
+                                    onClick={() => setShowPixieBubble(false)}
+                                >
+                                    Got it! 👍
+                                </button>
+                            </div>
+                        )}
+                    </>
+                );
+            };
+
+            const NotesPanel = () => {
+                if (!showNotes) return null;
+                return (
+                    <div className="notes-panel">
+                        <div className="notes-header">
+                            <span>📝 {currentGame ? 'Game Notes' : 'My Notes'}</span>
+                            <button 
+                                onClick={() => setShowNotes(false)} 
+                                style={{ 
+                                    background: 'transparent', 
+                                    border: 'none', 
+                                    color: 'white', 
+                                    cursor: 'pointer', 
+                                    fontSize: '24px',
+                                    fontWeight: 'bold'
+                                }}
+                            >
+                                ×
+                            </button>
+                        </div>
+                        <div className="notes-tabs">
+                            <button 
+                                className={`notes-tab ${activeNoteTab === 'current' ? 'active' : ''}`} 
+                                onClick={() => setActiveNoteTab('current')}
+                            >
+                                Current
+                            </button>
+                            <button 
+                                className={`notes-tab ${activeNoteTab === 'all' ? 'active' : ''}`} 
+                                onClick={() => setActiveNoteTab('all')}
+                            >
+                                All Games
+                            </button>
+                        </div>
+                        <div className="notes-content">
+                            <textarea 
+                                className="notes-textarea" 
+                                placeholder="Write your notes here..." 
+                                value={gameNotes[currentGame || 'general'] || ''} 
+                                onChange={(e) => setGameNotes({...gameNotes, [currentGame || 'general']: e.target.value})}
+                            />
+                        </div>
+                    </div>
+                );
+            };
+
+            // Render functions
+            const renderWelcome = () => (
+                <div className="welcome-screen page-transition">
+                    <div className="logo">✨</div>
+                    <h1 className="welcome-title">PixelPlay</h1>
+                    <p className="welcome-subtitle">Learn UX Design Through Play</p>
+                    <div className="card" style={{ maxWidth: '550px', margin: '0 auto' }}>
+                        <form onSubmit={(e) => {
+                            e.preventDefault();
+                            const formData = new FormData(e.target);
+                            const age = parseInt(formData.get('age'));
+                            const name = formData.get('name');
+                            
+                            // Parent redirect for age 22+
+                            if (age >= 22) {
+                                setUser({ name, age, isParent: true });
+                                setScreen('parent-info');
+                            } else {
+                                setUser({ name, age, isParent: false });
+                                setScreen('avatar-select');
+                            }
+                        }}>
+                            <div className="form-group">
+                                <label>What's your name?</label>
+                                <input 
+                                    type="text" 
+                                    name="name" 
+                                    required 
+                                    placeholder="Enter your name" 
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label>How old are you?</label>
+                                <select name="age" required>
+                                    <option value="">Select your age</option>
+                                    {[...Array(75)].map((_, i) => (
+                                        <option key={i + 6} value={i + 6}>
+                                            {i + 6} years old
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                            <button type="submit" className="btn btn-primary" style={{ width: '100%' }}>
+                                Let's Go! 🚀
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            );
+
+            const renderParentInfo = () => (
+                <div className="parent-info-container page-transition">
+                    <div className="parent-info-header">
+                        <h1>Hey! You're older than we thought! 👋</h1>
+                        <p style={{ fontSize: '20px', marginTop: '16px', opacity: 0.95 }}>
+                            No worries! PixelPlay is designed for learners ages 6-21, but we have resources for parents and educators too.
+                        </p>
+                    </div>
+
+                    <div className="parent-info-sections">
+                        <div className="info-section">
+                            <h3>What is PixelPlay?</h3>
+                            <p>
+                                PixelPlay is an interactive learning platform that teaches UX (User Experience) design through 
+                                story-based games and challenges. Students learn fundamental design concepts like color theory, 
+                                typography, layout, user research, and empathy through hands-on activities.
+                            </p>
+                        </div>
+
+                        <div className="info-section">
+                            <h3>Key Features</h3>
+                            <div className="feature-list">
+                                <div className="feature-item">
+                                    <span className="feature-icon">🎮</span>
+                                    <div>
+                                        <strong>4 Story-Based Games</strong>
+                                        <p style={{ margin: '4px 0 0', color: 'var(--text-light)' }}>
+                                            Palette Perfect, Page Builder Pro, Interview Detective, and Palette Puzzle
+                                        </p>
+                                    </div>
+                                </div>
+                                <div className="feature-item">
+                                    <span className="feature-icon">✨</span>
+                                    <div>
+                                        <strong>Pixie Helper System</strong>
+                                        <p style={{ margin: '4px 0 0', color: 'var(--text-light)' }}>
+                                            Instant explanations of design terminology
+                                        </p>
+                                    </div>
+                                </div>
+                                <div className="feature-item">
+                                    <span className="feature-icon">🎨</span>
+                                    <div>
+                                        <strong>Customization Options</strong>
+                                        <p style={{ margin: '4px 0 0', color: 'var(--text-light)' }}>
+                                            Themes, avatars, and rewards system
+                                        </p>
+                                    </div>
+                                </div>
+                                <div className="feature-item">
+                                    <span className="feature-icon">👨‍👩‍👧</span>
+                                    <div>
+                                        <strong>Parent Dashboard</strong>
+                                        <p style={{ margin: '4px 0 0', color: 'var(--text-light)' }}>
+                                            Track progress, set time limits, view learning metrics
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="info-section">
+                            <h3>Learning Objectives</h3>
+                            <p>
+                                Students will develop understanding of:
+                            </p>
+                            <ul style={{ marginTop: '12px', paddingLeft: '20px', lineHeight: '1.8' }}>
+                                <li><strong>Color Theory:</strong> How colors work together and affect emotions</li>
+                                <li><strong>Typography:</strong> Choosing and arranging text effectively</li>
+                                <li><strong>Layout & Hierarchy:</strong> Organizing content by importance</li>
+                                <li><strong>User Research:</strong> Understanding user needs through empathy</li>
+                                <li><strong>Accessibility:</strong> Designing for all users</li>
+                            </ul>
+                        </div>
+
+                        <div className="info-section">
+                            <h3>Want to try it anyway?</h3>
+                            <p style={{ marginBottom: '20px' }}>
+                                While designed for younger learners, adults can explore the platform too! 
+                                You'll get access to all games and features.
+                            </p>
+                            <button 
+                                className="btn btn-primary" 
+                                onClick={() => setScreen('avatar-select')}
+                                style={{ marginRight: '12px' }}
+                            >
+                                Continue to App →
+                            </button>
+                            <button 
+                                className="btn btn-secondary" 
+                                onClick={() => setScreen('welcome')}
+                            >
+                                ← Back
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
+
+            const renderAvatarSelect = () => (
+                <div className="page-transition" style={{ padding: '40px 20px' }}>
+                    <h2 style={{ fontSize: '42px', marginBottom: '20px', textAlign: 'center' }}>
+                        Choose Your Avatar
+                    </h2>
+                    <p style={{ textAlign: 'center', color: 'var(--text-light)', marginBottom: '40px', fontSize: '18px' }}>
+                        Pick the one that represents you!
+                    </p>
+                    <div className="avatar-grid">
+                        {PRESET_AVATARS.map(avatar => (
+                            <div 
+                                key={avatar.id} 
+                                className={`avatar-option ${selectedAvatar === avatar.id ? 'selected' : ''}`} 
+                                onClick={() => setSelectedAvatar(avatar.id)}
+                            >
+                                <img 
+                                    src={avatar.file} 
+                                    alt={avatar.name} 
+                                    onError={(e) => {
+                                        e.target.style.display = 'none';
+                                        e.target.parentElement.innerHTML = `<div style="font-size: 48px;">👤</div>`;
+                                    }}
+                                />
+                            </div>
+                        ))}
+                    </div>
+                    <div style={{ textAlign: 'center', marginTop: '40px' }}>
+                        <button 
+                            onClick={() => {
+                                setUser(prev => ({...prev, avatar: selectedAvatar}));
+                                setScreen('dashboard');
+                                showPixieHelp(`Welcome ${user?.name}! I'm Pixie, your UX guide! Highlight any design words you don't know and I'll help! ✨`);
+                            }} 
+                            className="btn btn-primary" 
+                            disabled={!selectedAvatar}
+                        >
+                            Start Learning! →
+                        </button>
+                    </div>
+                </div>
+            );
+
+            const renderDashboard = () => (
+                <div className="dashboard page-transition">
+                    <div className="dashboard-header">
+                        <div className="user-info">
+                            <div className="user-avatar" onClick={() => setScreen('profile')}>
+                                <img 
+                                    src={PRESET_AVATARS.find(a => a.id === user?.avatar)?.file || PRESET_AVATARS[0].file} 
+                                    alt="Avatar" 
+                                    onError={(e) => {
+                                        e.target.style.display = 'none';
+                                        e.target.parentElement.innerHTML = '<div style="font-size: 48px; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%;">👤</div>';
+                                    }}
+                                />
+                            </div>
+                            <div>
+                                <h2 style={{ fontSize: '32px', marginBottom: '4px' }}>Hey, {user?.name}!</h2>
+                                <p style={{ color: 'var(--text-light)', fontSize: '16px' }}>Ready to design?</p>
+                            </div>
+                        </div>
+                        <div className="user-stats">
+                            <div className="stat">
+                                <div className="stat-value">{gamesCompleted.length}</div>
+                                <div className="stat-label">Games</div>
+                            </div>
+                            <div className="stat">
+                                <div className="stat-value">{coins}</div>
+                                <div className="stat-label">Coins</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="games-grid">
+                        {GAMES_DATA.map(game => (
+                            <div
+                                key={game.id}
+                                className={`game-card ${gamesCompleted.includes(game.id) ? 'completed' : ''}`}
+                                onClick={() => {
+                                    setCurrentGame(game.id);
+                                    setScreen(`game-${game.id}`);
+                                }}
+                            >
+                                <div className="game-emoji">{game.emoji}</div>
+                                <h3 className="game-title">{game.title}</h3>
+                                <p className="game-desc">{game.description}</p>
+                                <div className="game-meta">
+                                    <span className={`game-tag tag-${game.difficulty.toLowerCase()}`}>
+                                        {game.difficulty}
+                                    </span>
+                                    <span style={{ color: 'var(--primary-purple)', fontWeight: '700', fontSize: '16px' }}>
+                                        {game.coinsReward} 🪙
+                                    </span>
+                                </div>
+                                {gamesCompleted.includes(game.id) && (
+                                    <div style={{ marginTop: '12px', color: 'var(--success-green)', fontWeight: '700', fontSize: '15px' }}>
+                                        ✓ Completed
+                                    </div>
+                                )}
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            );
+
+            // Profile, Parent Dashboard, Shop, Library - continuing in next part...
+            const renderProfile = () => (
+                <div className="profile-container page-transition">
+                    <div style={{ marginBottom: '28px' }}>
+                        <button onClick={() => setScreen('dashboard')} className="btn btn-secondary btn-small">
+                            ← Back to Dashboard
+                        </button>
+                    </div>
+                    
+                    <div className="profile-header">
+                        <div className="profile-avatar-large">
+                            <img 
+                                src={PRESET_AVATARS.find(a => a.id === user?.avatar)?.file || PRESET_AVATARS[0].file} 
+                                alt="Avatar" 
+                                onError={(e) => e.target.style.display = 'none'}
+                            />
+                        </div>
+                        <h2 style={{ fontSize: '36px', marginBottom: '10px' }}>{user?.name}</h2>
+                        <p style={{ fontSize: '20px', opacity: 0.95 }}>
+                            Level {Math.floor(gamesCompleted.length / 2) + 1} Designer
+                        </p>
+                    </div>
+
+                    <div className="profile-sections">
+                        <div className="profile-section">
+                            <h3>Your Stats</h3>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: '20px', marginTop: '20px' }}>
+                                <div style={{ textAlign: 'center', padding: '20px', background: 'var(--bg-light)', borderRadius: '16px' }}>
+                                    <div style={{ fontSize: '36px', fontWeight: '700', color: 'var(--primary-purple)' }}>
+                                        {gamesCompleted.length}
+                                    </div>
+                                    <div style={{ fontSize: '15px', color: 'var(--text-light)', marginTop: '6px' }}>
+                                        Games Completed
+                                    </div>
+                                </div>
+                                <div style={{ textAlign: 'center', padding: '20px', background: 'var(--bg-light)', borderRadius: '16px' }}>
+                                    <div style={{ fontSize: '36px', fontWeight: '700', color: 'var(--primary-purple)' }}>
+                                        {coins}
+                                    </div>
+                                    <div style={{ fontSize: '15px', color: 'var(--text-light)', marginTop: '6px' }}>
+                                        Coins Earned
+                                    </div>
+                                </div>
+                                <div style={{ textAlign: 'center', padding: '20px', background: 'var(--bg-light)', borderRadius: '16px' }}>
+                                    <div style={{ fontSize: '36px', fontWeight: '700', color: 'var(--primary-purple)' }}>
+                                        {badges.filter(b => b.unlocked).length}
+                                    </div>
+                                    <div style={{ fontSize: '15px', color: 'var(--text-light)', marginTop: '6px' }}>
+                                        Badges Earned
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="profile-section">
+                            <h3>My Badges</h3>
+                            <div className="badge-grid">
+                                {badges.map(badge => (
+                                    <div key={badge.id} className={`badge-item ${badge.unlocked ? 'unlocked' : 'locked'}`}>
+                                        <span className="badge-emoji">{badge.emoji}</span>
+                                        <div className="badge-name">{badge.name}</div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="profile-section">
+                            <h3>My Collection</h3>
+                            <p style={{ color: 'var(--text-light)', marginBottom: '16px' }}>
+                                You own {ownedItems.length} items from the shop
+                            </p>
+                            {ownedItems.length > 0 && (
+                                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                                    {ownedItems.map(itemId => {
+                                        const item = [...SHOP_ITEMS.themes, ...SHOP_ITEMS.cursorEffects, ...SHOP_ITEMS.powerups].find(i => i.id === itemId);
+                                        return item && (
+                                            <span 
+                                                key={itemId} 
+                                                style={{ 
+                                                    padding: '10px 18px', 
+                                                    background: 'var(--lavender)', 
+                                                    borderRadius: '12px', 
+                                                    fontSize: '15px',
+                                                    fontWeight: '600'
+                                                }}
+                                            >
+                                                {item.icon} {item.name}
+                                            </span>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            );
+
+            const renderParentDashboard = () => (
+                <div className="dashboard page-transition">
+                    <div style={{ marginBottom: '32px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <h2 style={{ fontSize: '40px' }}>Parent Dashboard</h2>
+                        <button onClick={() => setScreen('dashboard')} className="btn btn-secondary btn-small">
+                            Back to Game
+                        </button>
+                    </div>
+
+                    <div className="parent-controls">
+                        <div className="control-card">
+                            <h3>Screen Time</h3>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                                <span style={{ fontSize: '16px', fontWeight: '600' }}>Daily Time Limit</span>
+                                <label className="toggle-switch">
+                                    <input 
+                                        type="checkbox" 
+                                        checked={parentControls.timeLimit} 
+                                        onChange={(e) => setParentControls({...parentControls, timeLimit: e.target.checked})} 
+                                    />
+                                    <span className="slider"></span>
+                                </label>
+                            </div>
+                            {parentControls.timeLimit && (
+                                <div>
+                                    <label style={{ fontSize: '15px', fontWeight: '600' }}>
+                                        Max Minutes/Day: {parentControls.dailyLimit}
+                                    </label>
+                                    <input 
+                                        type="range" 
+                                        min="15" 
+                                        max="120" 
+                                        step="15" 
+                                        value={parentControls.dailyLimit}
+                                        onChange={(e) => setParentControls({...parentControls, dailyLimit: parseInt(e.target.value)})}
+                                        style={{ width: '100%', marginTop: '12px' }}
+                                    />
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="control-card">
+                            <h3>Audio Settings</h3>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <span style={{ fontSize: '16px', fontWeight: '600' }}>Sound Effects</span>
+                                <label className="toggle-switch">
+                                    <input 
+                                        type="checkbox" 
+                                        checked={parentControls.soundEnabled} 
+                                        onChange={(e) => setParentControls({...parentControls, soundEnabled: e.target.checked})} 
+                                    />
+                                    <span className="slider"></span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div className="control-card">
+                            <h3>Progress Reports</h3>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <span style={{ fontSize: '16px', fontWeight: '600' }}>Weekly Email</span>
+                                <label className="toggle-switch">
+                                    <input 
+                                        type="checkbox" 
+                                        checked={parentControls.progressReports} 
+                                        onChange={(e) => setParentControls({...parentControls, progressReports: e.target.checked})} 
+                                    />
+                                    <span className="slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="card" style={{ marginTop: '36px' }}>
+                        <h3 style={{ marginBottom: '20px', fontSize: '26px' }}>Learning Progress</h3>
+                        <div className="progress-chart">
+                            <div style={{ marginBottom: '20px' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
+                                    <span style={{ fontWeight: '700', fontSize: '16px' }}>Games Completed</span>
+                                    <span style={{ fontWeight: '700', fontSize: '16px' }}>
+                                        {gamesCompleted.length} / {GAMES_DATA.length}
+                                    </span>
+                                </div>
+                                <div className="progress-bar">
+                                    <div 
+                                        className="progress-fill" 
+                                        style={{ width: `${(gamesCompleted.length / GAMES_DATA.length) * 100}%` }}
+                                    />
+                                </div>
+                            </div>
+
+                            <div style={{ marginBottom: '20px' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
+                                    <span style={{ fontWeight: '700', fontSize: '16px' }}>Badges Earned</span>
+                                    <span style={{ fontWeight: '700', fontSize: '16px' }}>
+                                        {badges.filter(b => b.unlocked).length} / {badges.length}
+                                    </span>
+                                </div>
+                                <div className="progress-bar">
+                                    <div 
+                                        className="progress-fill" 
+                                        style={{ width: `${(badges.filter(b => b.unlocked).length / badges.length) * 100}%` }}
+                                    />
+                                </div>
+                            </div>
+
+                            <div>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
+                                    <span style={{ fontWeight: '700', fontSize: '16px' }}>Shop Collection</span>
+                                    <span style={{ fontWeight: '700', fontSize: '16px' }}>{ownedItems.length} items</span>
+                                </div>
+                                <p style={{ fontSize: '15px', color: 'var(--text-light)' }}>
+                                    {user?.name} has earned {coins} coins and purchased {ownedItems.length} items
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="card" style={{ marginTop: '32px' }}>
+                        <h3 style={{ marginBottom: '20px', fontSize: '26px' }}>Learning Skills Developed</h3>
+                        <div style={{ display: 'grid', gap: '16px' }}>
+                            {[
+                                { icon: '🎨', title: 'Color Theory', desc: 'Understanding color harmony and psychology' },
+                                { icon: '🏗️', title: 'Layout Design', desc: 'Building effective page structures' },
+                                { icon: '🕵️', title: 'User Research', desc: 'Understanding client needs and empathy' }
+                            ].map((skill, idx) => (
+                                <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                                    <span style={{ fontSize: '32px' }}>{skill.icon}</span>
+                                    <div>
+                                        <div style={{ fontWeight: '700', fontSize: '17px' }}>{skill.title}</div>
+                                        <div style={{ fontSize: '15px', color: 'var(--text-light)' }}>{skill.desc}</div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            );
+
+            const renderShop = () => {
+                const allItems = [
+                    ...SHOP_ITEMS.themes.map(item => ({ ...item, categoryLabel: 'Theme' })),
+                    ...SHOP_ITEMS.powerups.map(item => ({ ...item, categoryLabel: 'Power-up' })),
+                    ...SHOP_ITEMS.cursorEffects.map(item => ({ ...item, categoryLabel: 'Cursor Effect' }))
+                ];
+
+                return (
+                    <div className="dashboard page-transition">
+                        <h2 style={{ fontSize: '40px', marginBottom: '32px' }}>🛍️ Shop</h2>
+                        <div className="shop-grid">
+                            {allItems.map(item => (
+                                <div key={item.id} className={`shop-item ${ownedItems.includes(item.id) ? 'owned' : ''}`}>
+                                    <div className="shop-item-icon">{item.icon}</div>
+                                    <div className="shop-item-name">{item.name}</div>
+                                    <div className="shop-item-desc">{item.description}</div>
+                                    <div className="shop-item-price">{item.price} 🪙</div>
+                                    <button
+                                        className="btn btn-small btn-primary"
+                                        style={{ width: '100%' }}
+                                        onClick={() => purchaseItem(item)}
+                                        disabled={ownedItems.includes(item.id) || coins < item.price}
+                                    >
+                                        {ownedItems.includes(item.id) ? 'Owned ✓' : coins < item.price ? 'Not Enough Coins' : 'Buy Now'}
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                );
+            };
+
+            const renderLibrary = () => {
+                const filteredGames = libraryFilter === 'all' 
+                    ? GAMES_DATA 
+                    : GAMES_DATA.filter(g => g.category === libraryFilter);
+
+                return (
+                    <div className="dashboard page-transition">
+                        <h2 style={{ fontSize: '40px', marginBottom: '28px' }}>📚 Game Library</h2>
+                        <div className="library-filters">
+                            {['all', 'Color', 'Strategy', 'Research'].map(filter => (
+                                <button 
+                                    key={filter}
+                                    className={`filter-btn ${libraryFilter === filter ? 'active' : ''}`} 
+                                    onClick={() => setLibraryFilter(filter)}
+                                >
+                                    {filter === 'all' ? 'All Games' : filter}
+                                </button>
+                            ))}
+                        </div>
+                        <div className="games-grid">
+                            {filteredGames.map(game => (
+                                <div
+                                    key={game.id}
+                                    className={`game-card ${gamesCompleted.includes(game.id) ? 'completed' : ''}`}
+                                    onClick={() => {
+                                        setCurrentGame(game.id);
+                                        setScreen(`game-${game.id}`);
+                                    }}
+                                >
+                                    <div className="game-emoji">{game.emoji}</div>
+                                    <h3 className="game-title">{game.title}</h3>
+                                    <p className="game-desc">{game.description}</p>
+                                    <div className="game-meta">
+                                        <span className={`game-tag tag-${game.difficulty.toLowerCase()}`}>
+                                            {game.difficulty}
+                                        </span>
+                                        <span style={{ color: 'var(--primary-purple)', fontWeight: '700', fontSize: '16px' }}>
+                                            {game.coinsReward} 🪙
+                                        </span>
+                                    </div>
+                                    {gamesCompleted.includes(game.id) && (
+                                        <div style={{ marginTop: '12px', color: 'var(--success-green)', fontWeight: '700', fontSize: '15px' }}>
+                                            ✓ Completed
+                                        </div>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                );
+            };
+
+            // Game Components - continuing in final part...
+            // Game Components
+            const PalettePerfectGame = () => {
+                const scenario = CLIENT_SCENARIOS[currentScenario];
+                const colorOptions = [
+                    { id: '#FFFFFF', name: 'White' }, { id: '#F8F4FF', name: 'Lavender' }, { id: '#FFF5ED', name: 'Cream' },
+                    { id: '#F0FDF4', name: 'Mint' }, { id: '#8B5CF6', name: 'Purple' }, { id: '#06B6D4', name: 'Cyan' },
+                    { id: '#10B981', name: 'Green' }, { id: '#FF6B6B', name: 'Coral' }, { id: '#3B82F6', name: 'Blue' },
+                    { id: '#1F2937', name: 'Dark' }, { id: '#064E3B', name: 'Forest' }, { id: '#2D2424', name: 'Brown' }
+                ];
+
+                const fontOptions = [
+                    { id: 'sans', name: 'Sans', family: 'DM Sans, sans-serif' },
+                    { id: 'serif', name: 'Serif', family: 'Georgia, serif' },
+                    { id: 'display', name: 'Display', family: 'Fredoka, cursive' }
+                ];
+
+                const layoutOptions = [
+                    { id: 'left', name: 'Left' },
+                    { id: 'centered', name: 'Center' },
+                    { id: 'right', name: 'Right' }
+                ];
+
+                const previewStyle = {
+                    backgroundColor: selectedColors.bg,
+                    color: selectedColors.text,
+                    fontFamily: fontOptions.find(f => f.id === selectedFont)?.family,
+                    textAlign: selectedLayout
+                };
+
+                const buttonStyle = {
+                    backgroundColor: selectedColors.primary,
+                    color: '#FFFFFF'
+                };
+
+                const submitDesign = () => {
+                    let score = 0;
+                    if (selectedColors.bg === scenario.idealColors.bg) score += 33;
+                    if (selectedColors.primary === scenario.idealColors.primary) score += 33;
+                    if (selectedFont === scenario.idealFont) score += 17;
+                    if (selectedLayout === scenario.idealLayout) score += 17;
+
+                    if (score >= 80) {
+                        completeGame('palette-perfect');
+                        showPixieHelp(`Amazing work! Perfect score: ${score}/100! You really understand what ${scenario.name} needs! 🎨`);
+                    } else {
+                        showPixieHelp(`Good try! Score: ${score}/100. Think about what makes ${scenario.name} feel right!`);
+                    }
+                };
+
+                return (
+                    <div>
+                        <div className="card" style={{ marginBottom: '32px', background: 'linear-gradient(135deg, var(--primary-purple) 0%, var(--cyan) 100%)', color: 'white' }}>
+                            <h3 style={{ fontSize: '26px', marginBottom: '14px' }}>Client: {scenario.name}</h3>
+                            <p style={{ fontSize: '17px', lineHeight: '1.7' }}>{scenario.description}</p>
+                        </div>
+
+                        <div className="style-preview">
+                            <div className="preview-canvas" style={previewStyle}>
+                                <h2 className="preview-title">{scenario.name}</h2>
+                                <p className="preview-text">Welcome to our website! We're so glad you're here. Browse our amazing products and services.</p>
+                                <button className="preview-button" style={buttonStyle}>Shop Now</button>
+                            </div>
+                        </div>
+
+                        <div className="styling-options">
+                            <div className="styling-category">
+                                <h4>Background Color</h4>
+                                <div className="style-options-grid">
+                                    {colorOptions.map(color => (
+                                        <div 
+                                            key={color.id} 
+                                            className={`style-option ${selectedColors.bg === color.id ? 'selected' : ''}`} 
+                                            onClick={() => setSelectedColors({...selectedColors, bg: color.id})}
+                                        >
+                                            <div className="color-swatch" style={{ background: color.id }} />
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="styling-category">
+                                <h4>Primary Color</h4>
+                                <div className="style-options-grid">
+                                    {colorOptions.map(color => (
+                                        <div 
+                                            key={color.id} 
+                                            className={`style-option ${selectedColors.primary === color.id ? 'selected' : ''}`} 
+                                            onClick={() => setSelectedColors({...selectedColors, primary: color.id})}
+                                        >
+                                            <div className="color-swatch" style={{ background: color.id }} />
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="styling-category">
+                                <h4>Text Color</h4>
+                                <div className="style-options-grid">
+                                    {colorOptions.map(color => (
+                                        <div 
+                                            key={color.id} 
+                                            className={`style-option ${selectedColors.text === color.id ? 'selected' : ''}`} 
+                                            onClick={() => setSelectedColors({...selectedColors, text: color.id})}
+                                        >
+                                            <div className="color-swatch" style={{ background: color.id }} />
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="styling-category">
+                                <h4>Font Style</h4>
+                                <div className="style-options-grid">
+                                    {fontOptions.map(font => (
+                                        <div 
+                                            key={font.id} 
+                                            className={`style-option ${selectedFont === font.id ? 'selected' : ''}`} 
+                                            onClick={() => setSelectedFont(font.id)} 
+                                            style={{ fontFamily: font.family }}
+                                        >
+                                            Aa
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="styling-category">
+                                <h4>Layout</h4>
+                                <div className="style-options-grid">
+                                    {layoutOptions.map(layout => (
+                                        <div 
+                                            key={layout.id} 
+                                            className={`style-option ${selectedLayout === layout.id ? 'selected' : ''}`} 
+                                            onClick={() => setSelectedLayout(layout.id)}
+                                        >
+                                            {layout.name}
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style={{ marginTop: '32px', textAlign: 'center', display: 'flex', gap: '18px', justifyContent: 'center', flexWrap: 'wrap' }}>
+                            <button className="btn btn-primary" onClick={submitDesign}>Submit Design</button>
+                            {currentScenario < CLIENT_SCENARIOS.length - 1 && (
+                                <button className="btn btn-secondary" onClick={() => setCurrentScenario(prev => prev + 1)}>Next Client →</button>
+                            )}
+                        </div>
+                    </div>
+                );
+            };
+
+            const PageBuilderGame = () => {
+                const scenario = PAGE_BUILDER_SCENARIOS[builderScenario];
+
+                const handleDragStart = (e, element) => {
+                    e.dataTransfer.setData('element', JSON.stringify(element));
+                };
+
+                const handleDrop = (e) => {
+                    e.preventDefault();
+                    const element = JSON.parse(e.dataTransfer.getData('element'));
+                    setPlacedElements(prev => [...prev, { ...element, uniqueId: Date.now() }]);
+                };
+
+                const handleDragOver = (e) => {
+                    e.preventDefault();
+                };
+
+                const removeElement = (uniqueId) => {
+                    setPlacedElements(prev => prev.filter(el => el.uniqueId !== uniqueId));
+                };
+
+                const submitPage = () => {
+                    const hasAllMustHave = scenario.mustHave.every(req => 
+                        placedElements.some(el => el.id === req)
+                    );
+
+                    if (hasAllMustHave) {
+                        completeGame('page-builder');
+                        showPixieHelp('Perfect! You included all the required elements! 🏗️');
+                    } else {
+                        showPixieHelp('Check the client requirements - you\'re missing some must-have elements!');
+                    }
+                };
+
+                return (
+                    <div>
+                        <div className="card" style={{ marginBottom: '32px', background: 'linear-gradient(135deg, var(--primary-purple) 0%, var(--cyan) 100%)', color: 'white' }}>
+                            <h3 style={{ fontSize: '26px', marginBottom: '14px' }}>
+                                {scenario.client.avatar} {scenario.client.name} - {scenario.client.role}
+                            </h3>
+                            <p style={{ fontSize: '17px', lineHeight: '1.7', marginBottom: '18px' }}>{scenario.brief}</p>
+                            <div style={{ fontSize: '16px' }}>
+                                <strong>Requirements:</strong>
+                                <ul style={{ marginTop: '10px', paddingLeft: '24px', lineHeight: '1.8' }}>
+                                    {scenario.requirements.map((req, idx) => (
+                                        <li key={idx}>{req.icon} {req.text}</li>
+                                    ))}
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div className="builder-container">
+                            <div className="elements-panel">
+                                <h4 style={{ marginBottom: '18px' }}>Drag Elements</h4>
+                                {PAGE_BUILDER_ELEMENTS.map(element => (
+                                    <div
+                                        key={element.id}
+                                        className="element-item"
+                                        draggable
+                                        onDragStart={(e) => handleDragStart(e, element)}
+                                        style={{ borderColor: element.color }}
+                                    >
+                                        <span style={{ fontSize: '22px' }}>{element.icon}</span>
+                                        <span style={{ fontSize: '15px', fontWeight: '700' }}>{element.name}</span>
+                                    </div>
+                                ))}
+                            </div>
+
+                            <div className="canvas" onDrop={handleDrop} onDragOver={handleDragOver}>
+                                <h4 style={{ marginBottom: '24px', color: 'var(--text-light)', fontSize: '18px' }}>
+                                    Drop elements here to build the page
+                                </h4>
+                                {placedElements.map(element => (
+                                    <div 
+                                        key={element.uniqueId} 
+                                        className="placed-element" 
+                                        style={{ backgroundColor: element.color + '20', borderLeft: `5px solid ${element.color}` }}
+                                    >
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                                            <span style={{ fontSize: '28px' }}>{element.icon}</span>
+                                            <span style={{ fontWeight: '700', fontSize: '17px' }}>{element.name}</span>
+                                        </div>
+                                        <button className="remove-btn" onClick={() => removeElement(element.uniqueId)}>Remove</button>
+                                    </div>
+                                ))}
+                                {placedElements.length === 0 && (
+                                    <div style={{ textAlign: 'center', padding: '80px 20px', color: 'var(--text-light)', fontSize: '17px' }}>
+                                        Drag elements from the left panel to start building!
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        <div style={{ marginTop: '32px', textAlign: 'center', display: 'flex', gap: '18px', justifyContent: 'center' }}>
+                            <button className="btn btn-primary" onClick={submitPage}>Submit Page</button>
+                            {builderScenario < PAGE_BUILDER_SCENARIOS.length - 1 && (
+                                <button className="btn btn-secondary" onClick={() => { setBuilderScenario(prev => prev + 1); setPlacedElements([]); }}>
+                                    Next Client →
+                                </button>
+                            )}
+                        </div>
+                    </div>
+                );
+            };
+
+            const InterviewDetectiveGame = () => {
+                const scenario = DETECTIVE_SCENARIOS[detectiveScenario];
+
+                const selectSuspect = (suspect) => {
+                    setSelectedSuspect(suspect);
+                    if (suspect.isCorrect) {
+                        completeGame('interview-detective');
+                        showPixieHelp('Perfect match! You understood the client\'s needs! 🕵️');
+                    } else {
+                        showPixieHelp(suspect.feedback || 'Not quite right! Think about what the client really needs.');
+                    }
+                };
+
+                return (
+                    <div>
+                        <div className="card" style={{ marginBottom: '32px', background: 'linear-gradient(135deg, var(--primary-purple) 0%, var(--cyan) 100%)', color: 'white' }}>
+                            <h3 style={{ fontSize: '26px', marginBottom: '14px' }}>
+                                {scenario.client.avatar} {scenario.client.name} - {scenario.client.role}
+                            </h3>
+                            <p style={{ fontSize: '17px', lineHeight: '1.7', marginBottom: '18px' }}>{scenario.brief}</p>
+                            <div style={{ fontSize: '16px' }}>
+                                <strong>Client needs:</strong>
+                                <ul style={{ marginTop: '10px', paddingLeft: '24px', lineHeight: '1.8' }}>
+                                    {scenario.requirements.map((req, idx) => (
+                                        <li key={idx}>{req.icon} {req.text}</li>
+                                    ))}
+                                </ul>
+                            </div>
+                        </div>
+
+                        <h3 style={{ marginBottom: '20px', fontSize: '24px' }}>
+                            Which design matches {scenario.client.name}'s needs?
+                        </h3>
+                        <div className="suspects-grid">
+                            {scenario.suspects.map(suspect => (
+                                <div
+                                    key={suspect.id}
+                                    className={`suspect-card ${selectedSuspect?.id === suspect.id ? 'selected' : ''}`}
+                                    onClick={() => selectSuspect(suspect)}
+                                >
+                                    <div className="suspect-preview">{suspect.preview}</div>
+                                    <h4 style={{ marginBottom: '10px', fontSize: '20px' }}>{suspect.name}</h4>
+                                    <p style={{ fontSize: '15px', color: 'var(--text-light)', lineHeight: '1.5' }}>
+                                        {suspect.description}
+                                    </p>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                );
+            };
+
+            const ColorCombosGame = () => {
+                const challenge = COLOR_CHALLENGES[colorChallenge];
+
+                const selectColor = (color) => {
+                    if (selectedPalette.length < challenge.slotsNeeded && !selectedPalette.includes(color)) {
+                        setSelectedPalette(prev => [...prev, color]);
+                    }
+                };
+
+                const removeColor = (index) => {
+                    setSelectedPalette(prev => prev.filter((_, i) => i !== index));
+                };
+
+                const checkPalette = () => {
+                    let isCorrect = false;
+                    
+                    if (challenge.type === 'complementary') {
+                        isCorrect = challenge.correctPairs.some(pair => 
+                            selectedPalette.length === 2 &&
+                            ((selectedPalette[0] === pair[0] && selectedPalette[1] === pair[1]) ||
+                             (selectedPalette[0] === pair[1] && selectedPalette[1] === pair[0]))
+                        );
+                    } else {
+                        isCorrect = challenge.correctSet.every(c => selectedPalette.includes(c)) &&
+                                   selectedPalette.every(c => challenge.correctSet.includes(c));
+                    }
+
+                    if (isCorrect) {
+                        completeGame('color-combos');
+                        showPixieHelp('Perfect palette! You understand color harmony! 🌈');
+                    } else {
+                        showPixieHelp('Not quite! Think about color relationships on the color wheel.');
+                    }
+                };
+
+                return (
+                    <div>
+                        <div className="card" style={{ marginBottom: '32px', textAlign: 'center' }}>
+                            <h3 style={{ fontSize: '26px', marginBottom: '14px' }}>Color Challenge</h3>
+                            <p style={{ fontSize: '18px', color: 'var(--text-light)', lineHeight: '1.6' }}>
+                                {challenge.instruction}
+                            </p>
+                        </div>
+
+                        <div className="selected-palette">
+                            {Array.from({ length: challenge.slotsNeeded }).map((_, index) => (
+                                <div
+                                    key={index}
+                                    className={`palette-slot ${selectedPalette[index] ? 'filled' : ''}`}
+                                    style={{ backgroundColor: selectedPalette[index] || 'transparent' }}
+                                    onClick={() => selectedPalette[index] && removeColor(index)}
+                                >
+                                    {!selectedPalette[index] && (index + 1)}
+                                </div>
+                            ))}
+                        </div>
+
+                        <div className="color-wheel">
+                            {challenge.colors.map(color => (
+                                <div
+                                    key={color}
+                                    className={`color-chip ${selectedPalette.includes(color) ? 'selected' : ''}`}
+                                    style={{ backgroundColor: color }}
+                                    onClick={() => selectColor(color)}
+                                />
+                            ))}
+                        </div>
+
+                        <div style={{ marginTop: '32px', textAlign: 'center', display: 'flex', gap: '18px', justifyContent: 'center' }}>
+                            <button 
+                                className="btn btn-primary" 
+                                onClick={checkPalette} 
+                                disabled={selectedPalette.length !== challenge.slotsNeeded}
+                            >
+                                Check Palette
+                            </button>
+                            <button className="btn btn-secondary" onClick={() => setSelectedPalette([])}>Clear</button>
+                            {colorChallenge < COLOR_CHALLENGES.length - 1 && (
+                                <button 
+                                    className="btn btn-secondary" 
+                                    onClick={() => { setColorChallenge(prev => prev + 1); setSelectedPalette([]); }}
+                                >
+                                    Next Challenge →
+                                </button>
+                            )}
+                        </div>
+                    </div>
+                );
+            };
+
+            const renderGame = (gameId) => {
+                const games = {
+                    'palette-perfect': PalettePerfectGame,
+                    'page-builder': PageBuilderGame,
+                    'interview-detective': InterviewDetectiveGame,
+                    'color-combos': ColorCombosGame
+                };
+                const GameComponent = games[gameId];
+                const game = GAMES_DATA.find(g => g.id === gameId);
+
+                return (
+                    <div className="dashboard page-transition">
+                        <div style={{ marginBottom: '28px', display: 'flex', gap: '14px' }}>
+                            <button 
+                                onClick={() => { setScreen('dashboard'); setCurrentGame(null); }} 
+                                className="btn btn-secondary btn-small"
+                            >
+                                ← Back
+                            </button>
+                            <button 
+                                className="notes-toggle" 
+                                onClick={() => setShowNotes(!showNotes)} 
+                                style={{ position: 'relative', top: 'auto', right: 'auto' }}
+                            >
+                                📝 Notes
+                            </button>
+                        </div>
+                        <div className="card">
+                            <h2 style={{ fontSize: '36px', marginBottom: '18px' }}>
+                                {game?.emoji} {game?.title}
+                            </h2>
+                            <p style={{ color: 'var(--text-light)', marginBottom: '28px', fontSize: '17px', lineHeight: '1.6' }}>
+                                {game?.description}
+                            </p>
+                            <GameComponent />
+                        </div>
+                    </div>
+                );
+            };
+
+            // Main Render
+            return (
+                <div>
+                    {screen === 'welcome' && renderWelcome()}
+                    {screen === 'parent-info' && renderParentInfo()}
+                    {screen === 'avatar-select' && renderAvatarSelect()}
+                    {screen === 'dashboard' && renderDashboard()}
+                    {screen === 'profile' && renderProfile()}
+                    {screen === 'parent' && renderParentDashboard()}
+                    {screen === 'shop' && renderShop()}
+                    {screen === 'library' && renderLibrary()}
+                    {screen === 'game-palette-perfect' && renderGame('palette-perfect')}
+                    {screen === 'game-page-builder' && renderGame('page-builder')}
+                    {screen === 'game-interview-detective' && renderGame('interview-detective')}
+                    {screen === 'game-color-combos' && renderGame('color-combos')}
+                    
+                    {wishes > 0 && screen !== 'welcome' && screen !== 'avatar-select' && screen !== 'parent-info' && (
+                        <div className="wishes-counter">
+                            <span style={{ fontSize: '28px' }}>⭐</span>
+                            <span>{wishes} {wishes === 1 ? 'wish' : 'wishes'}</span>
+                        </div>
+                    )}
+                    
+                    <NotesPanel />
+                    {screen !== 'welcome' && screen !== 'avatar-select' && screen !== 'parent-info' && <PixieUniversalHelper />}
+                    
+                    {screen !== 'welcome' && screen !== 'avatar-select' && screen !== 'parent-info' && (
+                        <nav className="bottom-nav">
+                            <div className="nav-container">
+                                <div 
+                                    className={`nav-item ${activeNav === 'home' ? 'active' : ''}`} 
+                                    onClick={() => { setActiveNav('home'); setScreen('dashboard'); }}
+                                >
+                                    <span className="nav-icon">🏠</span>
+                                    <span className="nav-label">Home</span>
+                                </div>
+                                <div 
+                                    className={`nav-item ${activeNav === 'library' ? 'active' : ''}`} 
+                                    onClick={() => { setActiveNav('library'); setScreen('library'); }}
+                                >
+                                    <span className="nav-icon">📚</span>
+                                    <span className="nav-label">Library</span>
+                                </div>
+                                <div 
+                                    className={`nav-item ${activeNav === 'shop' ? 'active' : ''}`} 
+                                    onClick={() => { setActiveNav('shop'); setScreen('shop'); }}
+                                >
+                                    <span className="nav-icon">🛍️</span>
+                                    <span className="nav-label">Shop</span>
+                                </div>
+                                <div 
+                                    className={`nav-item ${activeNav === 'profile' ? 'active' : ''}`} 
+                                    onClick={() => { setActiveNav('profile'); setScreen('profile'); }}
+                                >
+                                    <span className="nav-icon">👤</span>
+                                    <span className="nav-label">Profile</span>
+                                </div>
+                                <div 
+                                    className={`nav-item ${activeNav === 'parent' ? 'active' : ''}`} 
+                                    onClick={() => { setActiveNav('parent'); setScreen('parent'); }}
+                                >
+                                    <span className="nav-icon">👨‍👩‍👧</span>
+                                    <span className="nav-label">Parents</span>
+                                </div>
+                            </div>
+                        </nav>
+                    )}
+                </div>
+            );
+        }
+
+        ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
+</body>
+</html>

@@ -1,0 +1,1172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Love Language · Zine Room</title>
+<script src="../../vendor/aframe-v1.4.0.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{overflow:hidden;background:#030006;font-family:Georgia,serif}
+canvas{cursor:crosshair}
+
+/* ── ENTRY ───────────────────────────────────────── */
+#entry{position:fixed;inset:0;z-index:1000;
+  background:radial-gradient(ellipse at 50% 38%,#1c0038 0%,#030006 70%);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;transition:opacity .85s}
+#entry h1{font-size:clamp(1.4rem,5vw,2.8rem);color:#fff;letter-spacing:.3em;
+  text-transform:uppercase;text-align:center;font-weight:normal;margin-bottom:6px}
+.tag{color:rgba(255,255,255,.4);font-style:italic;font-size:.85rem;letter-spacing:.2em;margin-bottom:28px;text-align:center}
+.q{color:rgba(255,255,255,.55);font-size:.75rem;letter-spacing:.22em;text-transform:uppercase;margin-bottom:12px}
+#btns{display:flex;flex-direction:column;gap:7px;width:100%;max-width:280px}
+.zb{background:transparent;border:1px solid rgba(255,255,255,.18);color:rgba(255,255,255,.82);
+  padding:10px 16px;cursor:pointer;font-size:.86rem;letter-spacing:.08em;transition:all .2s;
+  text-align:left;display:flex;align-items:center;gap:10px}
+.zb:hover,.zb.sel{background:rgba(255,255,255,.09);border-color:rgba(255,255,255,.5)}
+.dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+#go{background:transparent;border:1px solid rgba(255,255,255,.38);color:#fff;
+  padding:12px 36px;margin-top:20px;cursor:pointer;font-size:.8rem;letter-spacing:.26em;
+  text-transform:uppercase;transition:all .25s}
+#go:hover{background:rgba(255,255,255,.1)}
+
+/* ── HUD ─────────────────────────────────────────── */
+#hud{position:fixed;top:0;left:0;right:0;z-index:200;padding:10px 16px;display:none;
+  align-items:center;gap:10px;background:rgba(0,0,0,.5);backdrop-filter:blur(10px);
+  border-bottom:1px solid rgba(255,255,255,.08);flex-wrap:wrap}
+#zlabel{color:rgba(255,255,255,.88);font-size:.68rem;letter-spacing:.28em;
+  text-transform:uppercase;flex:1;min-width:80px}
+/* zone nav dots */
+#zone-nav{display:flex;gap:6px;align-items:center}
+.znd{width:11px;height:11px;border-radius:50%;cursor:pointer;opacity:.3;
+  border:1px solid rgba(255,255,255,.25);transition:all .22s;flex-shrink:0}
+.znd:hover{opacity:.65;transform:scale(1.2)}
+.znd.visited{opacity:.65}
+.znd.active{opacity:1;transform:scale(1.35);box-shadow:0 0 7px currentColor}
+#bback{background:transparent;border:1px solid rgba(255,255,255,.28);
+  color:rgba(255,255,255,.78);padding:5px 11px;cursor:pointer;font-size:.65rem;
+  letter-spacing:.14em;transition:all .2s;white-space:nowrap}
+#bback:hover{background:rgba(255,255,255,.1);color:#fff}
+
+/* ── OVERLAYS ────────────────────────────────────── */
+#fade{position:fixed;inset:0;background:#000;opacity:0;pointer-events:none;z-index:500;transition:opacity .55s}
+#fade.on{opacity:1;pointer-events:all}
+
+#aff{position:fixed;bottom:58px;left:50%;transform:translateX(-50%);
+  background:rgba(0,0,0,.72);backdrop-filter:blur(12px);
+  border:1px solid rgba(255,255,255,.14);color:rgba(255,255,255,.94);
+  padding:13px 26px;font-style:italic;font-size:.94rem;z-index:200;
+  opacity:0;transition:opacity .4s;pointer-events:none;
+  text-align:center;max-width:min(420px,88vw);line-height:1.55}
+#aff.on{opacity:1}
+
+/* ── VR FRAME ────────────────────────────────────── */
+#vrframe{position:fixed;inset:0;z-index:190;pointer-events:none;display:none}
+
+/* Dark overlay with transparent lens holes via SVG mask */
+#vrf-bg{
+  position:absolute;inset:0;
+  background:rgba(4,0,10,0.96);
+  mask:url(#vrf-lens-mask);
+  -webkit-mask:url(#vrf-lens-mask);
+  mask-size:100% 100%;
+  -webkit-mask-size:100% 100%;
+}
+/* Rim glows sit OVER the transparent holes (no mask applied) */
+.vrf-rim{
+  position:absolute;
+  top:13%;bottom:13%;width:39%;
+  border-radius:6%/8%;
+  border:2px solid rgba(155,89,182,0.7);
+  box-shadow:0 0 26px rgba(155,89,182,0.55),inset 0 0 30px rgba(0,0,0,0.45);
+  background:radial-gradient(ellipse at center,transparent 55%,rgba(0,0,0,0.35) 100%);
+  pointer-events:none;
+}
+#vrf-rim-l{left:3%}
+#vrf-rim-r{right:3%}
+/* Nose bridge cap */
+#vrf-nose{
+  position:absolute;left:42.5%;width:15%;
+  top:22%;bottom:22%;
+  background:rgba(4,0,10,0.96);
+  border-radius:4px;
+}
+/* Corner screws */
+.vrf-screw{
+  position:absolute;width:7px;height:7px;border-radius:50%;
+  background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);
+}
+/* Top / bottom bars */
+#vrf-topbar{
+  position:absolute;top:0;left:0;right:0;height:11.5%;
+  background:rgba(4,0,10,0.94);
+  border-bottom:1px solid rgba(155,89,182,0.12);
+  display:flex;align-items:center;justify-content:center;
+}
+#vrf-botbar{
+  position:absolute;bottom:0;left:0;right:0;height:11.5%;
+  background:rgba(4,0,10,0.94);
+  border-top:1px solid rgba(155,89,182,0.12);
+}
+/* Strap tabs */
+.vrf-strap{
+  position:absolute;top:38%;height:24%;width:3%;
+  background:rgba(16,8,26,0.95);
+}
+#vrf-strap-l{left:0;border-radius:0 4px 4px 0}
+#vrf-strap-r{right:0;border-radius:4px 0 0 4px}
+.vrf-strap::before,.vrf-strap::after{
+  content:'';position:absolute;left:20%;right:20%;height:1px;
+  background:rgba(255,255,255,0.1);
+}
+.vrf-strap::before{top:28%}.vrf-strap::after{top:56%}
+/* Brand label */
+#vrf-brand{
+  font-size:clamp(.45rem,.9vw,.65rem);letter-spacing:.32em;
+  color:rgba(155,89,182,0.48);font-family:Georgia,serif;text-transform:uppercase;
+}
+/* Toggle */
+#vrtoggle{position:fixed;top:52px;right:14px;z-index:210;padding:5px 10px;
+  background:rgba(0,0,0,.62);color:rgba(255,255,255,.6);
+  border:1px solid rgba(255,255,255,.2);font-size:.64rem;letter-spacing:.1em;
+  cursor:pointer;display:none;transition:all .2s}
+#vrtoggle:hover{color:#fff;border-color:rgba(255,255,255,.5)}
+#vrtoggle.active{color:#fff;border-color:rgba(155,89,182,.7);box-shadow:0 0 8px rgba(155,89,182,.4)}
+
+/* ── FINALE BUTTON ───────────────────────────────── */
+#finale-btn{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);
+  z-index:210;padding:10px 28px;display:none;
+  background:linear-gradient(135deg,rgba(155,89,182,.4),rgba(233,30,140,.35),rgba(26,188,156,.35),rgba(243,156,18,.35),rgba(231,76,60,.4));
+  border:1px solid rgba(255,255,255,.5);color:#fff;
+  font-size:.74rem;letter-spacing:.22em;text-transform:uppercase;cursor:pointer;
+  animation:rpulse 3s ease-in-out infinite}
+@keyframes rpulse{0%,100%{box-shadow:0 0 12px rgba(155,89,182,.5)}
+  50%{box-shadow:0 0 28px rgba(233,30,140,.75),0 0 50px rgba(26,188,156,.35)}}
+
+/* ── CAMERA FINALE OVERLAY ───────────────────────── */
+#cam-overlay{position:fixed;inset:0;z-index:800;display:none;
+  flex-direction:column;align-items:center;justify-content:center;
+  background:#030006}
+
+/* video viewport — styled like a photo booth window */
+#cam-viewport{position:relative;width:min(480px,88vw);
+  aspect-ratio:3/4;flex-shrink:0;
+  border:2px solid rgba(155,89,182,0.6);
+  box-shadow:0 0 28px rgba(155,89,182,0.4),inset 0 0 28px rgba(0,0,0,0.5);
+  overflow:hidden;background:#000}
+#cam-video{width:100%;height:100%;object-fit:cover;display:block}
+#cam-grad{position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(135deg,
+    rgba(155,89,182,.28) 0%,rgba(233,30,140,.22) 22%,
+    rgba(26,188,156,.2) 44%,rgba(243,156,18,.22) 68%,rgba(231,76,60,.28) 100%);
+  mix-blend-mode:screen}
+#cam-vig{position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(ellipse at center,transparent 42%,rgba(0,0,0,.82) 100%)}
+
+/* floating sparkle particles inside viewport */
+.cam-spark{position:absolute;border-radius:50%;pointer-events:none;
+  animation:sparkFloat 3s ease-in-out infinite}
+@keyframes sparkFloat{
+  0%{transform:translateY(0) scale(1);opacity:.9}
+  50%{transform:translateY(-22px) scale(1.3);opacity:.4}
+  100%{transform:translateY(0) scale(1);opacity:.9}}
+
+/* countdown number */
+#cam-countdown{position:absolute;inset:0;display:none;
+  align-items:center;justify-content:center;pointer-events:none}
+#cam-count-num{font-size:8rem;color:#fff;font-family:Georgia,serif;
+  text-shadow:0 0 32px rgba(155,89,182,1),0 0 64px rgba(233,30,140,.7);
+  animation:countPop .85s ease-out forwards}
+@keyframes countPop{
+  0%{transform:scale(2.2);opacity:0}
+  30%{opacity:1}
+  80%{transform:scale(1);opacity:1}
+  100%{transform:scale(.8);opacity:0}}
+
+/* flash */
+#cam-flash{position:absolute;inset:0;background:#fff;opacity:0;
+  pointer-events:none;transition:opacity .08s;z-index:10}
+
+/* UI chrome around viewport */
+#cam-chrome{width:min(480px,88vw);flex-shrink:0;
+  padding:12px 16px 0;display:flex;flex-direction:column;align-items:center;gap:8px}
+
+#cam-label{color:rgba(255,255,255,.82);font-size:.68rem;letter-spacing:.32em;
+  text-transform:uppercase;text-align:center;
+  text-shadow:0 0 12px rgba(155,89,182,.8);margin-top:14px}
+
+/* film strip dots above -->
+#cam-strip{display:flex;gap:6px;align-items:center;justify-content:center;margin-top:10px}
+.strip-dot{width:9px;height:9px;border-radius:50%;opacity:.35;transition:all .3s}
+.strip-dot.lit{opacity:1;box-shadow:0 0 8px currentColor;transform:scale(1.25)}
+
+/* shutter row */
+#cam-shutter-row{display:flex;align-items:center;gap:16px;margin-top:6px}
+#cam-snap{width:58px;height:58px;border-radius:50%;
+  background:rgba(155,89,182,.18);border:2px solid rgba(255,255,255,.65);
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  font-size:1.4rem;transition:all .18s;
+  box-shadow:0 0 16px rgba(155,89,182,.4)}
+#cam-snap:hover{background:rgba(155,89,182,.38);transform:scale(1.1);
+  box-shadow:0 0 28px rgba(155,89,182,.7)}
+#cam-hint{color:rgba(255,255,255,.35);font-size:.62rem;letter-spacing:.14em;text-align:center}
+
+#cam-close{position:absolute;top:14px;right:14px;background:transparent;
+  border:1px solid rgba(255,255,255,.22);color:rgba(255,255,255,.55);
+  padding:5px 12px;font-size:.65rem;letter-spacing:.12em;cursor:pointer;z-index:5;
+  transition:all .2s}
+#cam-close:hover{color:#fff;border-color:rgba(255,255,255,.5)}
+
+#dl-link{color:rgba(155,89,182,.8);font-size:.65rem;letter-spacing:.14em;
+  text-decoration:none;border-bottom:1px solid rgba(155,89,182,.4);
+  padding-bottom:2px;display:none;margin-top:4px;transition:color .2s}
+#dl-link:hover{color:#ce93d8}
+</style>
+</head>
+<body>
+
+<!-- ENTRY -->
+<div id="entry">
+  <h1>Love Language<br>Zine Room</h1>
+  <p class="tag">an immersive vr experience</p>
+  <p class="q">Which love language resonates with you?</p>
+  <div id="btns">
+    <button class="zb" data-zone="0"><span class="dot" style="background:#9b59b6"></span>Words of Affirmation</button>
+    <button class="zb" data-zone="1"><span class="dot" style="background:#e91e8c"></span>Physical Touch</button>
+    <button class="zb" data-zone="2"><span class="dot" style="background:#1abc9c"></span>Acts of Service</button>
+    <button class="zb" data-zone="3"><span class="dot" style="background:#f39c12"></span>Quality Time</button>
+    <button class="zb" data-zone="4"><span class="dot" style="background:#e74c3c"></span>Receiving Gifts</button>
+  </div>
+  <button id="go">Enter the Room →</button>
+</div>
+
+<!-- HUD -->
+<div id="hud">
+  <span id="zlabel">The Hub</span>
+  <div id="zone-nav">
+    <span class="znd" data-zone="0" style="background:#9b59b6" title="Words of Affirmation"></span>
+    <span class="znd" data-zone="1" style="background:#e91e8c" title="Physical Touch"></span>
+    <span class="znd" data-zone="2" style="background:#1abc9c" title="Acts of Service"></span>
+    <span class="znd" data-zone="3" style="background:#f39c12" title="Quality Time"></span>
+    <span class="znd" data-zone="4" style="background:#e74c3c" title="Receiving Gifts"></span>
+  </div>
+  <button id="bback">← Hub</button>
+</div>
+
+<div id="fade"></div>
+<div id="aff"></div>
+
+<!-- Hidden SVG mask definition for VR frame lens holes -->
+<svg id="vrf-svg" xmlns="http://www.w3.org/2000/svg"
+  style="position:absolute;width:0;height:0;overflow:hidden;display:block">
+  <defs>
+    <!-- maskUnits=objectBoundingBox: coords are 0–1 relative to element size -->
+    <mask id="vrf-lens-mask" maskUnits="objectBoundingBox" maskContentUnits="objectBoundingBox">
+      <rect width="1" height="1" fill="white"/>
+      <!-- Left lens hole -->
+      <rect x=".03" y=".13" width=".39" height=".74" rx=".04" ry=".055" fill="black"/>
+      <!-- Right lens hole -->
+      <rect x=".58" y=".13" width=".39" height=".74" rx=".04" ry=".055" fill="black"/>
+    </mask>
+  </defs>
+</svg>
+
+<!-- VR FRAME — masked dark overlay + decorative layer -->
+<div id="vrframe">
+  <!-- Masked dark bg: transparent where lenses are -->
+  <div id="vrf-bg"></div>
+  <!-- Rim glows (unmasked, render over transparent lens holes) -->
+  <div class="vrf-rim" id="vrf-rim-l"></div>
+  <div class="vrf-rim" id="vrf-rim-r"></div>
+  <!-- Nose bridge -->
+  <div id="vrf-nose"></div>
+  <!-- Corner screws -->
+  <div class="vrf-screw" style="left:4.8%;top:14.5%"></div>
+  <div class="vrf-screw" style="left:41.2%;top:14.5%"></div>
+  <div class="vrf-screw" style="left:4.8%;bottom:14.5%"></div>
+  <div class="vrf-screw" style="left:41.2%;bottom:14.5%"></div>
+  <div class="vrf-screw" style="right:4.8%;top:14.5%"></div>
+  <div class="vrf-screw" style="right:41.2%;top:14.5%"></div>
+  <div class="vrf-screw" style="right:4.8%;bottom:14.5%"></div>
+  <div class="vrf-screw" style="right:41.2%;bottom:14.5%"></div>
+  <!-- Top / bottom bars -->
+  <div id="vrf-topbar"><span id="vrf-brand">LOVE LANGUAGE · ZINE ROOM</span></div>
+  <div id="vrf-botbar"></div>
+  <!-- Strap tabs -->
+  <div class="vrf-strap" id="vrf-strap-l"></div>
+  <div class="vrf-strap" id="vrf-strap-r"></div>
+</div>
+<button id="vrtoggle">🥽 VR Frame</button>
+
+<!-- Finale -->
+<button id="finale-btn" style="display:none">✦ Capture Your Journey ✦</button>
+
+<!-- Camera overlay — photo booth style -->
+<div id="cam-overlay">
+  <button id="cam-close">✕ close</button>
+
+  <p id="cam-label">love language · zine room<br>
+    <span style="opacity:.45;font-size:.55rem;letter-spacing:.2em">all five rooms · your journey</span>
+  </p>
+
+  <!-- Film strip dots -->
+  <div id="cam-strip">
+    <span class="strip-dot" style="color:#9b59b6;background:#9b59b6"></span>
+    <span class="strip-dot" style="color:#e91e8c;background:#e91e8c"></span>
+    <span class="strip-dot" style="color:#1abc9c;background:#1abc9c"></span>
+    <span class="strip-dot" style="color:#f39c12;background:#f39c12"></span>
+    <span class="strip-dot" style="color:#e74c3c;background:#e74c3c"></span>
+  </div>
+
+  <!-- Photo booth viewport -->
+  <div id="cam-viewport">
+    <video id="cam-video" autoplay playsinline muted></video>
+    <div id="cam-grad"></div>
+    <div id="cam-vig"></div>
+    <!-- CSS sparkle particles -->
+    <div class="cam-spark" style="width:6px;height:6px;background:#d7b8f3;left:12%;top:18%;animation-delay:0s;animation-duration:2.8s"></div>
+    <div class="cam-spark" style="width:5px;height:5px;background:#f8bbd0;left:78%;top:12%;animation-delay:.5s;animation-duration:3.2s"></div>
+    <div class="cam-spark" style="width:7px;height:7px;background:#b2dfdb;left:88%;top:55%;animation-delay:1.1s;animation-duration:2.5s"></div>
+    <div class="cam-spark" style="width:4px;height:4px;background:#ffe082;left:22%;top:72%;animation-delay:.3s;animation-duration:3.8s"></div>
+    <div class="cam-spark" style="width:6px;height:6px;background:#ffcdd2;left:55%;top:82%;animation-delay:.8s;animation-duration:2.9s"></div>
+    <div class="cam-spark" style="width:5px;height:5px;background:#ce93d8;left:8%;top:44%;animation-delay:1.6s;animation-duration:3.4s"></div>
+    <div class="cam-spark" style="width:8px;height:8px;background:#80cbc4;left:68%;top:28%;animation-delay:.2s;animation-duration:4.1s"></div>
+    <div class="cam-spark" style="width:4px;height:4px;background:#fff;left:40%;top:8%;animation-delay:1.3s;animation-duration:2.6s"></div>
+    <div class="cam-spark" style="width:5px;height:5px;background:#f48fb1;left:92%;top:78%;animation-delay:.7s;animation-duration:3.6s"></div>
+    <div class="cam-spark" style="width:6px;height:6px;background:#ffa726;left:32%;top:90%;animation-delay:2.1s;animation-duration:3.0s"></div>
+    <!-- Countdown display (inside viewport) -->
+    <div id="cam-countdown"><span id="cam-count-num">3</span></div>
+    <!-- Flash -->
+    <div id="cam-flash"></div>
+  </div>
+
+  <!-- Controls below viewport -->
+  <div id="cam-chrome">
+    <div id="cam-shutter-row">
+      <button id="cam-snap">📸</button>
+    </div>
+    <p id="cam-hint">tap shutter for 3·2·1 countdown</p>
+    <a id="dl-link" download="love-language-zine.png">⬇ save your photo</a>
+  </div>
+</div>
+
+
+<!-- ════════════════════════════════════════════════
+     A-FRAME SCENE
+     ════════════════════════════════════════════════ -->
+<a-scene id="sc"
+  cursor="rayOrigin:mouse"
+  raycaster="objects:.hit;far:22"
+  renderer="antialias:true;logarithmicDepthBuffer:true"
+  vr-mode-ui="enabled:false"
+  loading-screen="dotsColor:#9b59b6;backgroundColor:#030006">
+
+  <a-assets timeout="20000"></a-assets>
+
+  <a-camera id="cam" position="0 1.6 0" look-controls wasd-controls="acceleration:12">
+    <a-cursor color="#fff" opacity=".45"
+      geometry="primitive:ring;radiusInner:.006;radiusOuter:.014"
+      material="color:#fff;shader:flat"
+      raycaster="objects:.hit;far:22"
+      animation__click="property:scale;startEvents:click;from:.1 .1 .1;to:1 1 1;dur:180">
+    </a-cursor>
+  </a-camera>
+
+  <!-- LIGHTS -->
+  <a-light type="ambient" color="#07000f" intensity=".9"></a-light>
+  <a-light id="zl" type="point" color="#7b2fbe" intensity="2.6" position="0 4 -1"
+    animation__p="property:light.intensity;to:3.8;dir:alternate;loop:true;dur:2600;easing:easeInOutSine">
+  </a-light>
+  <a-light type="directional" color="#0d0020" intensity=".4" position="-2 3 2"></a-light>
+
+  <!-- ZONE SKIES — one per zone + hub, toggled in JS -->
+  <a-sky id="sky-hub" color="#030006"></a-sky>
+  <a-sky id="sky-0"   color="#0d001f" visible="false"></a-sky>
+  <a-sky id="sky-1"   color="#160010" visible="false"></a-sky>
+  <a-sky id="sky-2"   color="#001810" visible="false"></a-sky>
+  <a-sky id="sky-3"   color="#140900" visible="false"></a-sky>
+  <a-sky id="sky-4"   color="#150000" visible="false"></a-sky>
+
+
+  <!-- ═══ HUB ═══ -->
+  <a-entity id="hub">
+    <a-text value="LOVE LANGUAGE&#10;ZINE ROOM" position="0 4.2 -4.5" align="center"
+      color="#fff" scale="1 1 1" font="mozillavr" wrap-count="18"
+      animation="property:position;from:0 4.2 -4.5;to:0 4.55 -4.5;dir:alternate;loop:true;dur:5200;easing:easeInOutSine">
+    </a-text>
+    <a-text value="choose your portal" position="0 3.3 -4.5" align="center"
+      color="rgba(255,255,255,0.28)" scale=".54 .54 .54">
+    </a-text>
+    <!-- Floating ambient hub text -->
+    <a-text value="love is a language" position="-3.2 3.8 -1.8" align="center"
+      color="rgba(155,89,182,0.45)" scale=".48 .48 .48" font="mozillavr"
+      animation="property:position;from:-3.2 3.8 -1.8;to:-3.2 4.2 -1.8;dir:alternate;loop:true;dur:6100;easing:easeInOutSine">
+    </a-text>
+    <a-text value="speak yours" position="3.4 3.5 -0.6" align="center"
+      color="rgba(233,30,140,0.38)" scale=".44 .44 .44" font="mozillavr"
+      animation="property:position;from:3.4 3.5 -0.6;to:3.4 3.9 -0.6;dir:alternate;loop:true;dur:5400;easing:easeInOutSine">
+    </a-text>
+    <a-text value="every room holds you" position="2.2 4.4 2.5" align="center"
+      color="rgba(26,188,156,0.35)" scale=".42 .42 .42" font="mozillavr"
+      animation="property:position;from:2.2 4.4 2.5;to:2.2 4.8 2.5;dir:alternate;loop:true;dur:7200;easing:easeInOutSine">
+    </a-text>
+    <a-text value="which calls to you?" position="-2.0 4.1 2.6" align="center"
+      color="rgba(243,156,18,0.38)" scale=".44 .44 .44" font="mozillavr"
+      animation="property:position;from:-2.0 4.1 2.6;to:-2.0 4.5 2.6;dir:alternate;loop:true;dur:4900;easing:easeInOutSine">
+    </a-text>
+    <a-text value="you are worthy of love" position="0.4 5.0 -2.8" align="center"
+      color="rgba(231,76,60,0.32)" scale=".4 .4 .4" font="mozillavr"
+      animation="property:position;from:0.4 5.0 -2.8;to:0.4 5.4 -2.8;dir:alternate;loop:true;dur:8100;easing:easeInOutSine">
+    </a-text>
+
+    <a-entity id="car" animation="property:rotation;to:0 360 0;loop:true;dur:48000;easing:linear">
+
+      <!-- Portal 0 · purple · front -->
+      <a-entity position="0 1.6 -3.6" look-at="#cam">
+        <a-torus radius=".72" radius-tubular=".055" color="#9b59b6"
+          material="emissive:#7b2fbe;emissiveIntensity:.95;metalness:.4;roughness:.3"
+          animation="property:rotation;to:0 0 360;loop:true;dur:9500;easing:linear"></a-torus>
+        <a-torus radius=".5" radius-tubular=".03" color="#ce93d8"
+          material="emissive:#ab47bc;emissiveIntensity:.6;opacity:.65"
+          animation="property:rotation;to:0 0 -360;loop:true;dur:6000;easing:linear"></a-torus>
+        <a-circle radius=".63" color="#0f001e" opacity=".9" material="side:double;emissive:#0a0018;emissiveIntensity:.3"></a-circle>
+        <a-plane width="1.5" height="1.5" opacity="0" class="hit portal-hit" data-zone="0"
+          material="transparent:true;depthWrite:false"></a-plane>
+        <a-text value="WORDS OF&#10;AFFIRMATION" position="0 0 .08" align="center" color="#d7b8f3" scale=".32 .32 .32" font="mozillavr"></a-text>
+      </a-entity>
+
+      <!-- Portal 1 · pink -->
+      <a-entity position="3.42 1.6 -1.11" look-at="#cam">
+        <a-torus radius=".72" radius-tubular=".055" color="#e91e8c"
+          material="emissive:#c2185b;emissiveIntensity:.95;metalness:.4;roughness:.3"
+          animation="property:rotation;to:360 0 0;loop:true;dur:7200;easing:linear"></a-torus>
+        <a-torus radius=".5" radius-tubular=".03" color="#f48fb1"
+          material="emissive:#f06292;emissiveIntensity:.6;opacity:.65"
+          animation="property:rotation;to:-360 0 0;loop:true;dur:5000;easing:linear"></a-torus>
+        <a-circle radius=".63" color="#1a000d" opacity=".9" material="side:double;emissive:#120008;emissiveIntensity:.3"></a-circle>
+        <a-plane width="1.5" height="1.5" opacity="0" class="hit portal-hit" data-zone="1"
+          material="transparent:true;depthWrite:false"></a-plane>
+        <a-text value="PHYSICAL&#10;TOUCH" position="0 0 .08" align="center" color="#f8bbd0" scale=".32 .32 .32" font="mozillavr"></a-text>
+      </a-entity>
+
+      <!-- Portal 2 · teal -->
+      <a-entity position="2.11 1.6 2.9" look-at="#cam">
+        <a-torus radius=".72" radius-tubular=".055" color="#1abc9c"
+          material="emissive:#009688;emissiveIntensity:.95;metalness:.4;roughness:.3"
+          animation="property:rotation;to:0 360 0;loop:true;dur:11000;easing:linear"></a-torus>
+        <a-torus radius=".5" radius-tubular=".03" color="#80cbc4"
+          material="emissive:#4db6ac;emissiveIntensity:.6;opacity:.65"
+          animation="property:rotation;to:0 -360 0;loop:true;dur:7000;easing:linear"></a-torus>
+        <a-circle radius=".63" color="#001510" opacity=".9" material="side:double;emissive:#000e0a;emissiveIntensity:.3"></a-circle>
+        <a-plane width="1.5" height="1.5" opacity="0" class="hit portal-hit" data-zone="2"
+          material="transparent:true;depthWrite:false"></a-plane>
+        <a-text value="ACTS OF&#10;SERVICE" position="0 0 .08" align="center" color="#b2dfdb" scale=".32 .32 .32" font="mozillavr"></a-text>
+      </a-entity>
+
+      <!-- Portal 3 · amber -->
+      <a-entity position="-2.11 1.6 2.9" look-at="#cam">
+        <a-torus radius=".72" radius-tubular=".055" color="#f39c12"
+          material="emissive:#e65100;emissiveIntensity:.95;metalness:.4;roughness:.3"
+          animation="property:rotation;to:0 0 -360;loop:true;dur:8800;easing:linear"></a-torus>
+        <a-torus radius=".5" radius-tubular=".03" color="#ffe082"
+          material="emissive:#ffa000;emissiveIntensity:.6;opacity:.65"
+          animation="property:rotation;to:0 0 360;loop:true;dur:5700;easing:linear"></a-torus>
+        <a-circle radius=".63" color="#140900" opacity=".9" material="side:double;emissive:#0e0600;emissiveIntensity:.3"></a-circle>
+        <a-plane width="1.5" height="1.5" opacity="0" class="hit portal-hit" data-zone="3"
+          material="transparent:true;depthWrite:false"></a-plane>
+        <a-text value="QUALITY&#10;TIME" position="0 0 .08" align="center" color="#ffe0b2" scale=".32 .32 .32" font="mozillavr"></a-text>
+      </a-entity>
+
+      <!-- Portal 4 · coral -->
+      <a-entity position="-3.42 1.6 -1.11" look-at="#cam">
+        <a-torus radius=".72" radius-tubular=".055" color="#e74c3c"
+          material="emissive:#c62828;emissiveIntensity:.95;metalness:.4;roughness:.3"
+          animation="property:rotation;to:360 360 0;loop:true;dur:8200;easing:linear"></a-torus>
+        <a-torus radius=".5" radius-tubular=".03" color="#ef9a9a"
+          material="emissive:#e57373;emissiveIntensity:.6;opacity:.65"
+          animation="property:rotation;to:-180 -360 0;loop:true;dur:6200;easing:linear"></a-torus>
+        <a-circle radius=".63" color="#150000" opacity=".9" material="side:double;emissive:#0e0000;emissiveIntensity:.3"></a-circle>
+        <a-plane width="1.5" height="1.5" opacity="0" class="hit portal-hit" data-zone="4"
+          material="transparent:true;depthWrite:false"></a-plane>
+        <a-text value="RECEIVING&#10;GIFTS" position="0 0 .08" align="center" color="#ffcdd2" scale=".32 .32 .32" font="mozillavr"></a-text>
+      </a-entity>
+    </a-entity><!-- /carousel -->
+
+    <!-- Hub ambient orbs -->
+    <a-sphere radius=".07"  color="#9b59b6" material="emissive:#7b2fbe;emissiveIntensity:1.3" position=".9 3.6 -2.6"
+      animation="property:position;from:.9 3.6 -2.6;to:1.3 4.1 -3.1;dir:alternate;loop:true;dur:3750;easing:easeInOutSine"></a-sphere>
+    <a-sphere radius=".055" color="#e91e8c" material="emissive:#c2185b;emissiveIntensity:1.3" position="-1.3 2.9 -1.5"
+      animation="property:position;from:-1.3 2.9 -1.5;to:-1.7 3.4 -2;dir:alternate;loop:true;dur:4200;easing:easeInOutSine"></a-sphere>
+    <a-sphere radius=".065" color="#1abc9c" material="emissive:#009688;emissiveIntensity:1.3" position="1.9 2.3 1.6"
+      animation="property:position;from:1.9 2.3 1.6;to:2.4 2.8 2.1;dir:alternate;loop:true;dur:3350;easing:easeInOutSine"></a-sphere>
+    <a-sphere radius=".055" color="#f39c12" material="emissive:#e65100;emissiveIntensity:1.3" position="-.4 4.3 -2.6"
+      animation="property:position;from:-.4 4.3 -2.6;to:.1 4.8 -3.1;dir:alternate;loop:true;dur:5100;easing:easeInOutSine"></a-sphere>
+    <a-sphere radius=".085" color="#e74c3c" material="emissive:#c62828;emissiveIntensity:1.3" position="-2.1 3.6 -1.5"
+      animation="property:position;from:-2.1 3.6 -1.5;to:-2.5 4.1 -2;dir:alternate;loop:true;dur:4600;easing:easeInOutSine"></a-sphere>
+    <a-torus-knot radius="3.4" radius-tubular=".026" p="3" q="5"
+      material="color:#2a1040;emissive:#3d1060;emissiveIntensity:.5;metalness:.8;roughness:.2;opacity:.55"
+      position="0 .08 0" rotation="90 0 0"
+      animation="property:rotation;from:90 0 0;to:90 0 360;loop:true;dur:26000;easing:linear">
+    </a-torus-knot>
+  </a-entity><!-- /hub -->
+
+
+  <!-- ═══ ZONE 0 · WORDS OF AFFIRMATION · purple ═══ -->
+  <a-entity id="z0" visible="false">
+    <!-- Ambient purple fog plane behind -->
+    <a-plane width="30" height="20" position="0 3 -8" rotation="0 0 0"
+      material="color:#2a004a;emissive:#1a0035;emissiveIntensity:.4;opacity:.35;transparent:true;side:double">
+    </a-plane>
+    <a-text value="you are enough" position="-1.9 2.7 -3.6" color="#d7b8f3" scale=".72 .72 .72" align="center"
+      class="hit affm" data-msg="You are enough. Exactly as you are, right now."
+      animation="property:position;from:-1.9 2.7 -3.6;to:-1.9 3.2 -3.6;dir:alternate;loop:true;dur:4300;easing:easeInOutSine"></a-text>
+    <a-text value="your voice matters" position="1.7 3.3 -3.1" color="#ce93d8" scale=".66 .66 .66" align="center"
+      class="hit affm" data-msg="Your voice matters. Speak and be truly heard."
+      animation="property:position;from:1.7 3.3 -3.1;to:1.7 3.8 -3.1;dir:alternate;loop:true;dur:3700;easing:easeInOutSine"></a-text>
+    <a-text value="I see you" position="0 4.3 -4.2" color="#b39ddb" scale=".9 .9 .9" align="center"
+      class="hit affm" data-msg="I see you — all of you — and you are beautiful."
+      animation="property:position;from:0 4.3 -4.2;to:0 4.8 -4.2;dir:alternate;loop:true;dur:5100;easing:easeInOutSine"></a-text>
+    <a-text value="you are loved" position="-2.9 3.9 -2.1" color="#e1bee7" scale=".6 .6 .6" align="center"
+      class="hit affm" data-msg="You are loved beyond what words can hold."
+      animation="property:position;from:-2.9 3.9 -2.1;to:-2.9 4.4 -2.1;dir:alternate;loop:true;dur:4600;easing:easeInOutSine"></a-text>
+    <a-sphere radius=".36" position="0 2.1 -3.6"
+      material="color:#9b59b6;emissive:#7b2fbe;emissiveIntensity:.55;metalness:.3;roughness:.5;opacity:.88"
+      class="hit affm" data-msg="You are worthy of every beautiful thing."
+      animation="property:scale;from:1 1 1;to:1.18 1.18 1.18;dir:alternate;loop:true;dur:3100;easing:easeInOutSine"></a-sphere>
+    <a-sphere radius=".23" position="1 2.7 -3.1" material="color:#7b2fbe;emissive:#6a1b9a;emissiveIntensity:.65"
+      animation="property:position;from:1 2.7 -3.1;to:1.3 3.2 -3.5;dir:alternate;loop:true;dur:4300;easing:easeInOutSine"></a-sphere>
+    <a-sphere radius=".17" position="-1 2.9 -3.3" material="color:#ab47bc;emissive:#9b59b6;emissiveIntensity:.6"
+      animation="property:position;from:-1 2.9 -3.3;to:-1.3 3.4 -3.6;dir:alternate;loop:true;dur:3900;easing:easeInOutSine"></a-sphere>
+    <a-torus radius="1.65" radius-tubular=".022" color="#9b59b6"
+      material="emissive:#7b2fbe;emissiveIntensity:.5;opacity:.55" position="0 2.1 -3.6"
+      animation="property:rotation;to:0 360 0;loop:true;dur:13500;easing:linear"></a-torus>
+    <a-torus radius="1.25" radius-tubular=".018" color="#ce93d8"
+      material="emissive:#ab47bc;emissiveIntensity:.42;opacity:.38" position="0 2.1 -3.6" rotation="90 0 0"
+      animation="property:rotation;to:90 0 360;loop:true;dur:9200;easing:linear"></a-torus>
+    <a-torus radius=".82" radius-tubular=".014" color="#e1bee7"
+      material="emissive:#ce93d8;emissiveIntensity:.35;opacity:.28" position="0 2.1 -3.6" rotation="45 45 0"
+      animation="property:rotation;to:405 45 360;loop:true;dur:7100;easing:linear"></a-torus>
+    <a-text value="WORDS OF AFFIRMATION" position="0 5.1 -4.8" align="center" color="#d7b8f3" scale=".74 .74 .74" font="mozillavr" opacity=".65"></a-text>
+    <a-sphere radius=".04"  position="2.3 3.6 -3.1" material="color:#e1bee7;emissive:#ce93d8;emissiveIntensity:1.3"
+      animation="property:position;from:2.3 3.6 -3.1;to:2.8 4.1 -3.6;dir:alternate;loop:true;dur:2900;easing:easeInOutSine"></a-sphere>
+    <a-sphere radius=".035" position="-2.4 4.3 -2.6" material="color:#e1bee7;emissive:#ce93d8;emissiveIntensity:1.3"
+      animation="property:position;from:-2.4 4.3 -2.6;to:-2.8 4.8 -3.1;dir:alternate;loop:true;dur:3300;easing:easeInOutSine"></a-sphere>
+    <a-sphere radius=".04"  position=".4 5.3 -3.1" material="color:#f3e5f5;emissive:#e1bee7;emissiveIntensity:1.3"
+      animation="property:position;from:.4 5.3 -3.1;to:.9 5.8 -3.6;dir:alternate;loop:true;dur:3700;easing:easeInOutSine"></a-sphere>
+    <a-sphere radius=".03"  position="-.9 2.3 -2.1" material="color:#f3e5f5;emissive:#e1bee7;emissiveIntensity:1.3"
+      animation="property:position;from:-.9 2.3 -2.1;to:-1.2 2.8 -2.5;dir:alternate;loop:true;dur:2600;easing:easeInOutSine"></a-sphere>
+  </a-entity>
+
+
+  <!-- ═══ ZONE 1 · PHYSICAL TOUCH · pink ═══ -->
+  <a-entity id="z1" visible="false">
+    <a-plane width="30" height="20" position="0 3 -8"
+      material="color:#3a0020;emissive:#250012;emissiveIntensity:.4;opacity:.35;transparent:true;side:double">
+    </a-plane>
+    <a-sphere radius=".52" position="0 1.9 -2.9"
+      material="color:#e91e8c;emissive:#c2185b;emissiveIntensity:.52;metalness:.15;roughness:.65;opacity:.92"
+      class="hit affm" data-msg="You are held. You are safe. You are home."
+      animation__p="property:scale;from:1 1 1;to:1.25 1.25 1.25;dir:alternate;loop:true;dur:1400;easing:easeInOutSine"
+      animation__b="property:position;from:0 1.9 -2.9;to:0 2.4 -2.9;dir:alternate;loop:true;dur:2000;easing:easeInOutSine"></a-sphere>
+    <a-sphere radius=".35" position="-1.8 2 -2.5"
+      material="color:#f06292;emissive:#e91e8c;emissiveIntensity:.6;metalness:.15;roughness:.55"
+      animation__p="property:scale;from:1 1 1;to:1.2 1.2 1.2;dir:alternate;loop:true;dur:1700;easing:easeInOutSine"
+      animation__b="property:position;from:-1.8 2 -2.5;to:-1.8 2.6 -2.5;dir:alternate;loop:true;dur:2400;easing:easeInOutSine"></a-sphere>
+    <a-sphere radius=".28" position="2 2.5 -2.2"
+      material="color:#f48fb1;emissive:#f06292;emissiveIntensity:.55"
+      class="hit affm" data-msg="Warmth. Connection. Presence. You are here."
+      animation__p="property:scale;from:1 1 1;to:1.3 1.3 1.3;dir:alternate;loop:true;dur:1200;easing:easeInOutSine"
+      animation__b="property:position;from:2 2.5 -2.2;to:2 3.1 -2.2;dir:alternate;loop:true;dur:2200;easing:easeInOutSine"></a-sphere>
+    <a-torus radius=".9" radius-tubular=".14" position="0 2.5 -3.2"
+      material="color:#ad1457;emissive:#880e4f;emissiveIntensity:.45;metalness:.25;roughness:.5"
+      animation__p="property:scale;from:1 1 1;to:1.08 1.08 1.08;dir:alternate;loop:true;dur:1800;easing:easeInOutSine"
+      animation__r="property:rotation;to:360 180 0;loop:true;dur:10000;easing:linear"></a-torus>
+    <!-- Heart shape -->
+    <a-entity position="-2.5 3.2 -2.5">
+      <a-sphere radius=".22" position="-.16 .12 0" material="color:#e91e8c;emissive:#c2185b;emissiveIntensity:.75"
+        animation="property:scale;from:1 1 1;to:1.12 1.12 1.12;dir:alternate;loop:true;dur:900;easing:easeInOutSine"></a-sphere>
+      <a-sphere radius=".22" position=".16 .12 0"  material="color:#e91e8c;emissive:#c2185b;emissiveIntensity:.75"
+        animation="property:scale;from:1 1 1;to:1.12 1.12 1.12;dir:alternate;loop:true;dur:900;easing:easeInOutSine"></a-sphere>
+      <a-cone height=".32" radius-bottom=".3" radius-top="0" position="0 -.16 0"
+        material="color:#c2185b;emissive:#ad1457;emissiveIntensity:.7"></a-cone>
+    </a-entity>
+    <a-text value="you are held"  position="-1.6 4 -3.5"  color="#f8bbd0" scale=".68 .68 .68" align="center"
+      class="hit affm" data-msg="You are held in the safest kind of love."
+      animation="property:position;from:-1.6 4 -3.5;to:-1.6 4.5 -3.5;dir:alternate;loop:true;dur:3500;easing:easeInOutSine"></a-text>
+    <a-text value="you are safe"  position="1.8 3.8 -3"   color="#fce4ec" scale=".65 .65 .65" align="center"
+      class="hit affm" data-msg="You are safe. Rest. Breathe. Be."
+      animation="property:position;from:1.8 3.8 -3;to:1.8 4.3 -3;dir:alternate;loop:true;dur:4000;easing:easeInOutSine"></a-text>
+    <a-text value="PHYSICAL TOUCH" position="0 5.1 -4.8" align="center" color="#f8bbd0" scale=".74 .74 .74" font="mozillavr" opacity=".65"></a-text>
+    <a-sphere radius=".05" position="2.8 2.3 -1.8" material="color:#fce4ec;emissive:#f48fb1;emissiveIntensity:1.3"
+      animation__s="property:scale;from:1 1 1;to:.1 .1 .1;dir:alternate;loop:true;dur:900"
+      animation__p="property:position;from:2.8 2.3 -1.8;to:3.3 2.8 -2.3;dir:alternate;loop:true;dur:2100"></a-sphere>
+    <a-sphere radius=".04" position="-2.2 1.8 -3.2" material="color:#fce4ec;emissive:#f48fb1;emissiveIntensity:1.3"
+      animation__s="property:scale;from:1 1 1;to:.1 .1 .1;dir:alternate;loop:true;dur:1100"
+      animation__p="property:position;from:-2.2 1.8 -3.2;to:-2.7 2.3 -3.7;dir:alternate;loop:true;dur:2400"></a-sphere>
+    <a-sphere radius=".05" position=".7 4.8 -2.5"  material="color:#fce4ec;emissive:#f48fb1;emissiveIntensity:1.3"
+      animation__s="property:scale;from:1 1 1;to:.05 .05 .05;dir:alternate;loop:true;dur:800"
+      animation__p="property:position;from:.7 4.8 -2.5;to:1.2 5.3 -3;dir:alternate;loop:true;dur:1900"></a-sphere>
+  </a-entity>
+
+
+  <!-- ═══ ZONE 2 · ACTS OF SERVICE · teal ═══ -->
+  <a-entity id="z2" visible="false">
+    <a-plane width="30" height="20" position="0 3 -8"
+      material="color:#003028;emissive:#001e18;emissiveIntensity:.4;opacity:.35;transparent:true;side:double">
+    </a-plane>
+    <a-sphere id="cht" radius=".14" position="-3 2.5 -3"
+      material="color:#80cbc4;emissive:#4db6ac;emissiveIntensity:.9;metalness:.4;roughness:.3"
+      animation="property:position;from:-3 2.5 -3;to:3 2.5 -3;dir:alternate;loop:true;dur:4000;easing:easeInOutCubic"></a-sphere>
+    <a-sphere id="chf" radius=".1" position="-2 2.5 -3"
+      material="color:#1abc9c;emissive:#009688;emissiveIntensity:1.1;metalness:.4;roughness:.3"
+      chase="target:#cht;speed:.025"></a-sphere>
+    <a-box width=".42" height=".42" depth=".42" position="-2.5 1.5 -3"
+      material="color:#1abc9c;emissive:#009688;emissiveIntensity:.6;metalness:.55;roughness:.3"
+      class="hit affm" data-msg="Your effort is seen. Every act of care is an act of love."
+      animation__m="property:position;from:-2.5 1.5 -3;to:2.5 3 -3;dir:alternate;loop:true;dur:5000;easing:easeInOutCubic"
+      animation__r="property:rotation;to:360 360 0;loop:true;dur:5500;easing:linear"></a-box>
+    <a-entity position="0 2.8 -3.5">
+      <a-torus radius=".55" radius-tubular=".09" color="#1abc9c"
+        material="emissive:#009688;emissiveIntensity:.7;metalness:.75;roughness:.15"
+        animation="property:rotation;to:360 0 0;loop:true;dur:5500;easing:linear"></a-torus>
+      <a-torus radius=".55" radius-tubular=".09" color="#16a085"
+        material="emissive:#00796b;emissiveIntensity:.7;metalness:.75;roughness:.15" rotation="90 0 0"
+        animation="property:rotation;to:90 0 360;loop:true;dur:7000;easing:linear"></a-torus>
+      <a-sphere radius=".2" material="color:#26d0ce;emissive:#1abc9c;emissiveIntensity:.6"
+        animation="property:scale;from:1 1 1;to:1.2 1.2 1.2;dir:alternate;loop:true;dur:2500;easing:easeInOutSine"></a-sphere>
+    </a-entity>
+    <a-sphere radius=".18" material="color:#1de9b6;emissive:#00bfa5;emissiveIntensity:.8"
+      animation="property:position;from:-3 4 -1;to:0 2 -4;dir:alternate;loop:true;dur:3500;easing:easeInOutCubic"></a-sphere>
+    <a-torus-knot radius=".42" radius-tubular=".04" p="3" q="4" position="-2.5 3.5 -2.5"
+      material="color:#1abc9c;emissive:#009688;emissiveIntensity:.5;metalness:.5;roughness:.3"
+      animation="property:rotation;to:360 360 0;loop:true;dur:10000;easing:linear"></a-torus-knot>
+    <a-entity position="2.5 1 -2.8">
+      <a-cone height=".65" radius-bottom=".32" radius-top="0"
+        material="color:#1abc9c;emissive:#009688;emissiveIntensity:.5;metalness:.4;roughness:.4"></a-cone>
+      <a-sphere radius=".22" position="0 .5 0" material="color:#26d0ce;emissive:#1abc9c;emissiveIntensity:.65"
+        animation="property:scale;from:1 1 1;to:1.15 1.15 1.15;dir:alternate;loop:true;dur:2000;easing:easeInOutSine"></a-sphere>
+    </a-entity>
+    <a-text value="your effort is seen"  position="-1.8 4.2 -3.5" color="#b2dfdb" scale=".68 .68 .68" align="center"
+      class="hit affm" data-msg="Every small act of service carries infinite weight."
+      animation="property:position;from:-1.8 4.2 -3.5;to:-1.8 4.7 -3.5;dir:alternate;loop:true;dur:4000;easing:easeInOutSine"></a-text>
+    <a-text value="care flows through you" position="2 4 -3"    color="#80cbc4" scale=".62 .62 .62" align="center"
+      class="hit affm" data-msg="Care flows through you. You are the gift."
+      animation="property:position;from:2 4 -3;to:2 4.5 -3;dir:alternate;loop:true;dur:3500;easing:easeInOutSine"></a-text>
+    <a-text value="ACTS OF SERVICE" position="0 5.1 -4.8" align="center" color="#b2dfdb" scale=".74 .74 .74" font="mozillavr" opacity=".65"></a-text>
+  </a-entity>
+
+
+  <!-- ═══ ZONE 3 · QUALITY TIME · amber ═══ -->
+  <a-entity id="z3" visible="false">
+    <a-plane width="30" height="20" position="0 3 -8"
+      material="color:#2a1400;emissive:#1a0c00;emissiveIntensity:.4;opacity:.35;transparent:true;side:double">
+    </a-plane>
+    <a-sphere radius=".45" position="0 2 -3.5"
+      material="color:#f39c12;emissive:#e65100;emissiveIntensity:.45;metalness:.2;roughness:.6;opacity:.92"
+      class="hit affm" data-msg="This moment was made for you. Be here. Be present."
+      animation="property:scale;from:1 1 1;to:1.08 1.08 1.08;dir:alternate;loop:true;dur:3500;easing:easeInOutSine"></a-sphere>
+    <a-torus radius="1.6" radius-tubular=".018" color="#f39c12"
+      material="emissive:#e65100;emissiveIntensity:.35;opacity:.4" position="0 2 -3.5" rotation="90 0 0"></a-torus>
+    <!-- Orbit: two rings of orbiters -->
+    <a-entity position="0 2 -3.5"
+      animation="property:rotation;from:0 0 0;to:0 360 0;loop:true;dur:12000;easing:linear">
+      <a-sphere radius=".16" position="1.6 0 0"
+        material="color:#ffa726;emissive:#f57c00;emissiveIntensity:.85;metalness:.3;roughness:.4"></a-sphere>
+      <a-sphere radius=".12" position="-1.6 0 0"
+        material="color:#ffb74d;emissive:#ff8f00;emissiveIntensity:.75;metalness:.3;roughness:.4"></a-sphere>
+    </a-entity>
+    <a-entity position="0 2 -3.5"
+      animation="property:rotation;from:60 0 0;to:60 360 0;loop:true;dur:18000;easing:linear">
+      <a-sphere radius=".1" position="0 0 1.6"
+        material="color:#ffe082;emissive:#ffd54f;emissiveIntensity:.9"></a-sphere>
+      <a-sphere radius=".09" position="0 0 -1.6"
+        material="color:#fff9c4;emissive:#fff176;emissiveIntensity:.8"></a-sphere>
+    </a-entity>
+    <!-- SLOW object -->
+    <a-box width=".35" height=".35" depth=".35" position="-2.8 2.8 -2.8"
+      material="color:#ffa726;emissive:#f57c00;emissiveIntensity:.5;metalness:.45;roughness:.4"
+      animation__f="property:position;from:-2.8 2.8 -2.8;to:-2.8 3.8 -2.8;dir:alternate;loop:true;dur:9000;easing:easeInOutSine"
+      animation__r="property:rotation;to:360 0 360;loop:true;dur:18000;easing:linear"></a-box>
+    <!-- FAST orbiter -->
+    <a-entity position="2.5 2.5 -2"
+      animation="property:rotation;from:0 0 0;to:0 360 0;loop:true;dur:1800;easing:linear">
+      <a-sphere radius=".1" position=".8 0 0"
+        material="color:#ffe082;emissive:#ffd54f;emissiveIntensity:1.2"></a-sphere>
+    </a-entity>
+    <a-torus-knot radius=".38" radius-tubular=".035" p="5" q="3" position="2.5 3.5 -3.5"
+      material="color:#f39c12;emissive:#e65100;emissiveIntensity:.5;metalness:.5;roughness:.3"
+      animation="property:rotation;to:360 360 0;loop:true;dur:8000;easing:linear"></a-torus-knot>
+    <a-text value="this moment is yours" position="-2 4 -3"   color="#ffe0b2" scale=".68 .68 .68" align="center"
+      class="hit affm" data-msg="Time shared in love is never lost."
+      animation="property:position;from:-2 4 -3;to:-2 4.5 -3;dir:alternate;loop:true;dur:4500;easing:easeInOutSine"></a-text>
+    <a-text value="be present"          position="2 4.2 -3.5" color="#fff8e1" scale=".65 .65 .65" align="center"
+      class="hit affm" data-msg="Being fully present is the greatest act of love."
+      animation="property:position;from:2 4.2 -3.5;to:2 4.7 -3.5;dir:alternate;loop:true;dur:3800;easing:easeInOutSine"></a-text>
+    <a-text value="QUALITY TIME" position="0 5.1 -4.8" align="center" color="#ffe0b2" scale=".74 .74 .74" font="mozillavr" opacity=".65"></a-text>
+  </a-entity>
+
+
+  <!-- ═══ ZONE 4 · RECEIVING GIFTS · coral ═══ -->
+  <a-entity id="z4" visible="false">
+    <a-plane width="30" height="20" position="0 3 -8"
+      material="color:#2a0000;emissive:#1a0000;emissiveIntensity:.4;opacity:.35;transparent:true;side:double">
+    </a-plane>
+
+    <!-- GIFT BOX — ALL animations on parent so it moves as one unit -->
+    <a-entity position="0 2.05 -3"
+      animation__r="property:rotation;from:0 0 0;to:0 360 0;loop:true;dur:7000;easing:linear"
+      animation__f="property:position;from:0 2.05 -3;to:0 2.40 -3;dir:alternate;loop:true;dur:2200;easing:easeInOutSine">
+      <!-- Invisible click catcher -->
+      <a-box id="gift-hit" class="hit" width="1.7" height="2.0" depth="1.7"
+        material="opacity:0;transparent:true;depthWrite:false"></a-box>
+      <!-- Box body — glow pulse only, no movement -->
+      <a-box width=".72" height=".72" depth=".72"
+        material="color:#c62828;emissive:#e74c3c;emissiveIntensity:.55;metalness:.35;roughness:.35"
+        animation__g="property:material.emissiveIntensity;from:.4;to:1.1;dir:alternate;loop:true;dur:900">
+      </a-box>
+      <!-- Lid — static -->
+      <a-box width=".78" height=".14" depth=".78" position="0 .44 0"
+        material="color:#b71c1c;emissive:#ef5350;emissiveIntensity:.5;metalness:.3;roughness:.4">
+      </a-box>
+      <!-- Ribbon vertical — static -->
+      <a-box width=".1" height=".88" depth=".76"
+        material="color:#ffcdd2;emissive:#ef9a9a;emissiveIntensity:.65">
+      </a-box>
+      <!-- Ribbon horizontal — static -->
+      <a-box width=".76" height=".88" depth=".1"
+        material="color:#ffcdd2;emissive:#ef9a9a;emissiveIntensity:.65">
+      </a-box>
+      <!-- Bow left — static -->
+      <a-torus radius=".14" radius-tubular=".04" position="-.12 .52 0"
+        material="color:#ffcdd2;emissive:#f48fb1;emissiveIntensity:.8">
+      </a-torus>
+      <!-- Bow right — static -->
+      <a-torus radius=".14" radius-tubular=".04" position=".12 .52 0"
+        material="color:#ffcdd2;emissive:#f48fb1;emissiveIntensity:.8">
+      </a-torus>
+    </a-entity>
+
+    <!-- Neon VIE text label + invisible click catcher -->
+    <a-entity position="0 1.05 -3">
+      <a-box id="vie-hit" class="hit" width="2.2" height=".55" depth=".3"
+        material="opacity:0;transparent:true;depthWrite:false"></a-box>
+      <a-box width="1.82" height=".33" depth=".05"
+        material="color:#0d0000;emissive:#e74c3c;emissiveIntensity:.22;metalness:.6;roughness:.2"
+        animation__fl="property:material.emissiveIntensity;from:.1;to:.9;dir:alternate;loop:true;dur:420;easing:easeInOutSine">
+      </a-box>
+      <a-text value="✦  VIE — DOJA CAT  ·  CLICK TO OPEN  ✦" position="0 0 .06"
+        align="center" color="#ffcdd2" scale=".27 .27 .27"
+        animation="property:material.opacity;from:.55;to:1;dir:alternate;loop:true;dur:420">
+      </a-text>
+    </a-entity>
+
+    <!-- Floating gift boxes -->
+    <a-box width=".32" height=".32" depth=".32" position="-2.2 2.5 -2.8"
+      material="color:#ef5350;emissive:#c62828;emissiveIntensity:.6;metalness:.2;roughness:.5"
+      animation__f="property:position;from:-2.2 2.5 -2.8;to:-2.2 3.2 -2.8;dir:alternate;loop:true;dur:3800;easing:easeInOutSine"
+      animation__r="property:rotation;to:360 180 90;loop:true;dur:6500;easing:linear"></a-box>
+    <a-box width=".22" height=".22" depth=".22" position="2.2 3 -2.5"
+      material="color:#e53935;emissive:#b71c1c;emissiveIntensity:.7;metalness:.3;roughness:.4"
+      animation__f="property:position;from:2.2 3 -2.5;to:2.2 3.9 -2.5;dir:alternate;loop:true;dur:4500;easing:easeInOutSine"
+      animation__r="property:rotation;to:0 360 180;loop:true;dur:4200;easing:linear"></a-box>
+    <a-box width=".28" height=".28" depth=".28" position="1.5 2.2 -4"
+      material="color:#ff7043;emissive:#e64a19;emissiveIntensity:.6;metalness:.2;roughness:.5"
+      animation__f="property:position;from:1.5 2.2 -4;to:1.5 3 -4;dir:alternate;loop:true;dur:4200;easing:easeInOutSine"
+      animation__r="property:rotation;to:180 360 0;loop:true;dur:5200;easing:linear"></a-box>
+    <!-- Sparkles -->
+    <a-sphere radius=".055" position="1.2 4.2 -2.8" material="color:#ffcdd2;emissive:#ff8a80;emissiveIntensity:1.3"
+      animation__s="property:scale;from:1 1 1;to:.05 .05 .05;dir:alternate;loop:true;dur:850"
+      animation__p="property:position;from:1.2 4.2 -2.8;to:1.7 4.7 -3.3;dir:alternate;loop:true;dur:2100"></a-sphere>
+    <a-sphere radius=".045" position="-1.6 3.8 -2.5" material="color:#ffcdd2;emissive:#ff8a80;emissiveIntensity:1.3"
+      animation__s="property:scale;from:1 1 1;to:.05 .05 .05;dir:alternate;loop:true;dur:650"
+      animation__p="property:position;from:-1.6 3.8 -2.5;to:-2.1 4.3 -3;dir:alternate;loop:true;dur:2400"></a-sphere>
+    <a-sphere radius=".04"  position="0 5.2 -3.5" material="color:#fff8e1;emissive:#ffe082;emissiveIntensity:1.3"
+      animation__s="property:scale;from:1 1 1;to:.05 .05 .05;dir:alternate;loop:true;dur:1050"
+      animation__p="property:position;from:0 5.2 -3.5;to:.5 5.7 -4;dir:alternate;loop:true;dur:1900"></a-sphere>
+    <a-sphere radius=".05"  position="2.8 2.8 -3.8" material="color:#ffcdd2;emissive:#ff8a80;emissiveIntensity:1.3"
+      animation__s="property:scale;from:1 1 1;to:.05 .05 .05;dir:alternate;loop:true;dur:750"
+      animation__p="property:position;from:2.8 2.8 -3.8;to:3.3 3.3 -4.3;dir:alternate;loop:true;dur:2200"></a-sphere>
+    <a-text value="you deserve this" position="-2.2 4.2 -3.5" color="#ffcdd2" scale=".68 .68 .68" align="center"
+      class="hit affm" data-msg="Receiving with grace is beautiful. You deserve this."
+      animation="property:position;from:-2.2 4.2 -3.5;to:-2.2 4.7 -3.5;dir:alternate;loop:true;dur:4000;easing:easeInOutSine"></a-text>
+    <a-text value="you are the gift"  position="2.2 3.8 -2.8" color="#fff8e1" scale=".65 .65 .65" align="center"
+      class="hit affm" data-msg="You yourself are the most precious gift of all."
+      animation="property:position;from:2.2 3.8 -2.8;to:2.2 4.3 -2.8;dir:alternate;loop:true;dur:3500;easing:easeInOutSine"></a-text>
+    <a-text value="RECEIVING GIFTS" position="0 5.1 -4.8" align="center" color="#ffcdd2" scale=".74 .74 .74" font="mozillavr" opacity=".65"></a-text>
+  </a-entity>
+
+</a-scene>
+
+<script>
+// ── CHASE COMPONENT ──────────────────────────────────
+AFRAME.registerComponent('chase',{
+  schema:{target:{type:'selector'},speed:{default:.018}},
+  tick:function(){
+    if(!this.data.target)return;
+    this.el.object3D.position.lerp(this.data.target.object3D.position,this.data.speed);
+  }
+});
+
+// ── CONFIG ───────────────────────────────────────────
+const ZONES=[
+  {name:'Words of Affirmation', light:'#9b59b6', fog:'#0d001f', lpos:'0 4 -2',  sky:'sky-0'},
+  {name:'Physical Touch',       light:'#e91e8c', fog:'#160010', lpos:'-2 4 0',  sky:'sky-1'},
+  {name:'Acts of Service',      light:'#1abc9c', fog:'#001810', lpos:'2 4 -2',  sky:'sky-2'},
+  {name:'Quality Time',         light:'#f39c12', fog:'#140900', lpos:'0 4 2',   sky:'sky-3'},
+  {name:'Receiving Gifts',      light:'#e74c3c', fog:'#150000', lpos:'0 4 -1',  sky:'sky-4'},
+];
+const HUB_LIGHT='#7b2fbe', HUB_FOG='#030006';
+let cur=-1, transitioning=false, chosen=null;
+const visited=new Set();
+const isMobile=/iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+const fadeEl  =document.getElementById('fade');
+const hudEl   =document.getElementById('hud');
+const lblEl   =document.getElementById('zlabel');
+const affEl   =document.getElementById('aff');
+const scEl    =document.getElementById('sc');
+const zl      =document.getElementById('zl');
+const finBtn  =document.getElementById('finale-btn');
+
+// helper — toggle skies
+function setSky(id){
+  ['sky-hub','sky-0','sky-1','sky-2','sky-3','sky-4'].forEach(s=>{
+    document.getElementById(s).setAttribute('visible', s===id ? 'true':'false');
+  });
+}
+
+// ── VR FRAME ─────────────────────────────────────────
+const vrFrame  =document.getElementById('vrframe');
+const vrToggle =document.getElementById('vrtoggle');
+let vrOn=false;
+function initVRFrame(){
+  if(isMobile)return;
+  vrToggle.style.display='block';
+  vrToggle.addEventListener('click',()=>{
+    vrOn=!vrOn;
+    vrFrame.style.display=vrOn?'block':'none';
+    vrToggle.classList.toggle('active',vrOn);
+    vrToggle.textContent=vrOn?'🥽 Frame On':'🥽 VR Frame';
+  });
+}
+
+// ── AUDIO ────────────────────────────────────────────
+let actx=null,asrcs=[];
+function stopAudio(){
+  asrcs.forEach(n=>{try{n.stop&&n.stop()}catch(e){}});
+  asrcs=[];
+  if(actx){actx.close().catch(()=>{});actx=null;}
+}
+function playAudio(z){
+  stopAudio();
+  try{
+    actx=new(window.AudioContext||window.webkitAudioContext)();
+    const ctx=actx;
+    const TONES=[[174,396,285],[285,528,639],[396,174,528],[528,741,396],[639,852,528]];
+    const rLen=ctx.sampleRate*2.5;
+    const rBuf=ctx.createBuffer(2,rLen,ctx.sampleRate);
+    for(let c=0;c<2;c++){const d=rBuf.getChannelData(c);for(let i=0;i<rLen;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/rLen,2.5);}
+    const rev=ctx.createConvolver();rev.buffer=rBuf;
+    const master=ctx.createGain();
+    master.gain.setValueAtTime(0,ctx.currentTime);
+    master.gain.linearRampToValueAtTime(0.08,ctx.currentTime+3);
+    rev.connect(master);master.connect(ctx.destination);
+    TONES[z].forEach((freq,i)=>{
+      const osc=ctx.createOscillator(),g=ctx.createGain();
+      const lfo=ctx.createOscillator(),lg=ctx.createGain();
+      lfo.frequency.value=0.15+i*0.08;lg.gain.value=freq*0.003;
+      lfo.connect(lg);lg.connect(osc.frequency);lfo.start();
+      osc.type='sine';osc.frequency.value=freq;
+      g.gain.value=i===0?.38:i===1?.28:.18;
+      osc.connect(g);g.connect(rev);osc.start();
+      asrcs.push(osc,lfo);
+    });
+    asrcs.push(master);
+  }catch(e){}
+}
+
+// ── ZONE NAV DOTS ────────────────────────────────────
+function updateDots(idx){
+  document.querySelectorAll('.znd').forEach(d=>{
+    const z=parseInt(d.getAttribute('data-zone'));
+    d.classList.toggle('active',z===idx);
+    d.classList.toggle('visited',visited.has(z));
+  });
+}
+
+// ── FINALE ───────────────────────────────────────────
+function checkFinale(){
+  if(visited.size===5&&finBtn.style.display==='none'){
+    finBtn.style.display='block';
+    finBtn.animate(
+      [{opacity:0,transform:'translateX(-50%) scale(.85)'},{opacity:1,transform:'translateX(-50%) scale(1)'}],
+      {duration:700,fill:'forwards'}
+    );
+    showAff('✦  All five rooms explored — your journey is complete  ✦');
+  }
+}
+
+// ── TRANSITIONS ──────────────────────────────────────
+function fadeIn(cb){fadeEl.classList.add('on');setTimeout(cb,600);}
+function fadeOut(){setTimeout(()=>fadeEl.classList.remove('on'),80);}
+
+function goHub(){
+  if(transitioning)return; transitioning=true;
+  fadeIn(()=>{
+    for(let i=0;i<5;i++)document.getElementById('z'+i).setAttribute('visible','false');
+    document.getElementById('hub').setAttribute('visible','true');
+    setSky('sky-hub');
+    zl.setAttribute('light',`color:${HUB_LIGHT};intensity:2.6`);
+    scEl.setAttribute('fog',`type:exponential;color:${HUB_FOG};density:.012`);
+    lblEl.textContent='The Hub';
+    hudEl.style.display='none';
+    cur=-1;stopAudio();fadeOut();
+    setTimeout(()=>{transitioning=false;},700);
+  });
+}
+
+function goZone(idx){
+  if(transitioning)return; transitioning=true;
+  fadeIn(()=>{
+    document.getElementById('hub').setAttribute('visible','false');
+    for(let i=0;i<5;i++)document.getElementById('z'+i).setAttribute('visible','false');
+    document.getElementById('z'+idx).setAttribute('visible','true');
+    const z=ZONES[idx];
+    setSky(z.sky);
+    zl.setAttribute('light',`color:${z.light};intensity:2.8`);
+    zl.setAttribute('position',z.lpos);
+    zl.setAttribute('animation__p','property:light.intensity;to:4;dir:alternate;loop:true;dur:2000;easing:easeInOutSine');
+    scEl.setAttribute('fog',`type:exponential;color:${z.fog};density:.038`);
+    lblEl.textContent=z.name;
+    hudEl.style.display='flex';
+    cur=idx;
+    visited.add(idx);
+    updateDots(idx);
+    checkFinale();
+    setTimeout(()=>playAudio(idx),2000);
+    fadeOut();
+    setTimeout(()=>{transitioning=false;},700);
+  });
+}
+
+// ── AFFIRMATION ──────────────────────────────────────
+let affT=null;
+function showAff(msg){
+  affEl.textContent=msg;affEl.classList.add('on');
+  if(affT)clearTimeout(affT);
+  affT=setTimeout(()=>affEl.classList.remove('on'),4500);
+}
+
+// ── DOJA CAT TWO-TAP CONFIRM ─────────────────────────
+let dojaArmed=false, dojaTimer=null;
+function openDoja(){
+  if(!dojaArmed){
+    // First tap — arm it
+    dojaArmed=true;
+    showAff('✦  Tap again to open Vie by Doja Cat  ✦');
+    dojaTimer=setTimeout(()=>{
+      dojaArmed=false;
+      affEl.classList.remove('on');
+    },3000);
+  } else {
+    // Second tap — fire
+    clearTimeout(dojaTimer);
+    dojaArmed=false;
+    showAff('✦  Opening Vie by Doja Cat  ✦');
+    setTimeout(()=>window.open('https://www.dojacat.com/','_blank'),800);
+  }
+}
+
+function setupClicks(){
+  // Portal planes → enter zone
+  document.querySelectorAll('.portal-hit').forEach(el=>{
+    el.addEventListener('click',()=>{
+      const z=parseInt(el.getAttribute('data-zone'));
+      if(!isNaN(z)&&cur===-1)goZone(z);
+    });
+  });
+  // HUD zone nav dots → jump to any zone
+  document.querySelectorAll('.znd').forEach(d=>{
+    d.addEventListener('click',()=>{
+      const z=parseInt(d.getAttribute('data-zone'));
+      if(!isNaN(z))goZone(z);
+    });
+  });
+  // Affirmation objects
+  document.querySelectorAll('.affm').forEach(el=>{
+    el.addEventListener('click',()=>{
+      const m=el.getAttribute('data-msg');
+      if(m)showAff(m);
+    });
+  });
+  // Gift hit box → open Doja Cat
+  document.getElementById('gift-hit').addEventListener('click', openDoja);
+  // VIE neon text hit box → open Doja Cat
+  document.getElementById('vie-hit').addEventListener('click', openDoja);
+  // Back to hub
+  document.getElementById('bback').addEventListener('click',goHub);
+}
+
+// ── CAMERA FINALE ────────────────────────────────────
+const camOverlay  = document.getElementById('cam-overlay');
+const camVideo    = document.getElementById('cam-video');
+const camSnap     = document.getElementById('cam-snap');
+const camClose    = document.getElementById('cam-close');
+const camFlash    = document.getElementById('cam-flash');
+const dlLink      = document.getElementById('dl-link');
+const camCountEl  = document.getElementById('cam-countdown');
+const camCountNum = document.getElementById('cam-count-num');
+const stripDots   = document.querySelectorAll('.strip-dot');
+let camStream=null, counting=false;
+
+// Light up strip dots one by one on open
+function animateStrip(){
+  stripDots.forEach((d,i)=>{
+    d.classList.remove('lit');
+    setTimeout(()=>d.classList.add('lit'), i*180);
+  });
+}
+
+finBtn.addEventListener('click', async ()=>{
+  camOverlay.style.display='flex';
+  dlLink.style.display='none';
+  animateStrip();
+  try{
+    camStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user'},audio:false});
+    camVideo.srcObject=camStream;
+  }catch(e){
+    document.getElementById('cam-label').innerHTML=
+      'Camera access needed<br><span style="opacity:.45;font-size:.55rem">check browser permissions</span>';
+  }
+});
+
+camClose.addEventListener('click',()=>{
+  if(camStream){camStream.getTracks().forEach(t=>t.stop());camStream=null;}
+  camVideo.srcObject=null;
+  camOverlay.style.display='none';
+  dlLink.style.display='none';
+  counting=false;
+});
+
+// 3-2-1 countdown then snap
+function runCountdown(cb){
+  if(counting)return; counting=true;
+  camSnap.disabled=true;
+  let n=3;
+  camCountEl.style.display='flex';
+  function tick(){
+    camCountNum.textContent=n;
+    // re-trigger CSS animation
+    camCountNum.style.animation='none';
+    void camCountNum.offsetWidth;
+    camCountNum.style.animation='countPop .85s ease-out forwards';
+    if(n===0){
+      setTimeout(()=>{camCountEl.style.display='none';cb();counting=false;camSnap.disabled=false;},400);
+      return;
+    }
+    n--;
+    setTimeout(tick,950);
+  }
+  tick();
+}
+
+camSnap.addEventListener('click',()=>{
+  runCountdown(()=>{
+    // Flash
+    camFlash.style.opacity='1';
+    setTimeout(()=>camFlash.style.opacity='0',180);
+
+    const W=camVideo.videoWidth||640, H=camVideo.videoHeight||480;
+    const cv=document.createElement('canvas');
+    cv.width=W; cv.height=H;
+    const ctx=cv.getContext('2d');
+
+    // Flip horizontally (selfie mirror)
+    ctx.translate(W,0); ctx.scale(-1,1);
+    ctx.drawImage(camVideo,0,0,W,H);
+    ctx.setTransform(1,0,0,1,0,0);
+
+    // Rainbow screen blend
+    const gr=ctx.createLinearGradient(0,0,W,H);
+    gr.addColorStop(0  ,'rgba(155,89,182,.32)');
+    gr.addColorStop(.25,'rgba(233,30,140,.26)');
+    gr.addColorStop(.5 ,'rgba(26,188,156,.22)');
+    gr.addColorStop(.75,'rgba(243,156,18,.26)');
+    gr.addColorStop(1  ,'rgba(231,76,60,.32)');
+    ctx.globalCompositeOperation='screen';
+    ctx.fillStyle=gr; ctx.fillRect(0,0,W,H);
+
+    // Vignette
+    ctx.globalCompositeOperation='multiply';
+    const vg=ctx.createRadialGradient(W/2,H/2,H*.22,W/2,H/2,H*.7);
+    vg.addColorStop(0,'rgba(255,255,255,1)');
+    vg.addColorStop(1,'rgba(0,0,0,.68)');
+    ctx.fillStyle=vg; ctx.fillRect(0,0,W,H);
+    ctx.globalCompositeOperation='source-over';
+
+    // White polaroid border
+    const brd=Math.round(W*.045);
+    ctx.fillStyle='rgba(255,255,255,0.06)';
+    ctx.fillRect(0,0,W,brd);           // top
+    ctx.fillRect(0,H-brd*2.2,W,brd*2.2); // bottom (wider — polaroid style)
+    ctx.fillRect(0,0,brd,H);           // left
+    ctx.fillRect(W-brd,0,brd,H);       // right
+
+    // Sparkle dots on frame
+    const sparkColors=['#d7b8f3','#f8bbd0','#b2dfdb','#ffe082','#ffcdd2'];
+    for(let i=0;i<18;i++){
+      const sx=Math.random()*W, sy=Math.random()<.5?Math.random()*brd:(H-brd*2.2)+Math.random()*brd*2.2;
+      const sr=1.5+Math.random()*3;
+      ctx.beginPath();
+      ctx.arc(sx,sy,sr,0,Math.PI*2);
+      ctx.fillStyle=sparkColors[i%sparkColors.length];
+      ctx.globalAlpha=0.7+Math.random()*.3;
+      ctx.fill();
+    }
+    ctx.globalAlpha=1;
+
+    // Bottom watermark
+    const fs=Math.round(H*.03);
+    ctx.font=`italic ${fs}px Georgia,serif`;
+    ctx.textAlign='center';
+    ctx.fillStyle='rgba(155,89,182,.75)';
+    ctx.fillText('✦ Love Language · Zine Room ✦', W/2, H-Math.round(brd*.8));
+
+    const url=cv.toDataURL('image/png');
+    dlLink.href=url; dlLink.style.display='block';
+    if(isMobile) window.open(url,'_blank');
+  });
+});
+
+// ── ENTRY ────────────────────────────────────────────
+document.querySelectorAll('.zb').forEach(b=>{
+  b.addEventListener('click',()=>{
+    document.querySelectorAll('.zb').forEach(x=>x.classList.remove('sel'));
+    b.classList.add('sel');
+    chosen=parseInt(b.getAttribute('data-zone'));
+  });
+});
+
+document.getElementById('go').addEventListener('click',()=>{
+  const ov=document.getElementById('entry');
+  ov.style.opacity='0';ov.style.pointerEvents='none';
+  setTimeout(()=>{
+    ov.style.display='none';
+    setupClicks();
+    initVRFrame();
+    scEl.setAttribute('background','color:#030006;transparent:false');
+    setTimeout(()=>{
+      if(chosen!==null)goZone(chosen);
+      else scEl.setAttribute('fog',`type:exponential;color:${HUB_FOG};density:.012`);
+    },1500);
+  },850);
+});
+
+// iOS audio unlock
+document.addEventListener('touchstart',function u(){
+  const C=window.AudioContext||window.webkitAudioContext;
+  if(C){const x=new C();x.resume().then(()=>x.close());}
+  document.removeEventListener('touchstart',u);
+},{once:true});
+</script>
+</body>
+</html>
