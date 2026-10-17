@@ -2,22 +2,15 @@
 
 Dionna Womack's portfolio. Plain HTML, CSS and JavaScript, no build step.
 
-<<<<<<< HEAD
 - `index.html` is the site. Styles in `assets/style.css`, behaviour (including live Elara) in `assets/app.js`.
 - `demos/` holds the working projects: `elara/`, `pixelplay/`, `zine-room/`. They load their libraries from `assets/lib/` (not `vendor/`, which many .gitignore templates skip), so nothing depends on outside CDNs.
 - Fonts are self-hosted in `fonts/` (Fraunces and DM Sans, SIL Open Font License).
-=======
-- `index.html` is the site. Styles in `assets/site.css`, behaviour (including live Elara) in `assets/site.js`.
-- `demos/` holds the working projects: `elara/`, `pixelplay/`, `zine-room/`. They load their libraries from `vendor/`, so nothing depends on outside CDNs.
-- Fonts are self-hosted in `fonts/` (Libre Franklin and Source Serif 4, SIL Open Font License).
->>>>>>> parent of 0e1ebda (Portfolio Update)
 
 ## Editing copy
 Open `index.html` in any text editor (or right in GitHub with the pencil icon), change the words, commit. The site updates in about a minute.
 
 ## Adding pictures
 Drop a `.webp` or `.jpg` into `img/`, then copy an existing `<img>` line and change the `src`, `width`, `height` and `alt`.
-<<<<<<< HEAD
 
 ## Teaching Elara new answers
 In `assets/app.js`, find `const intents = [`. Each entry has a pattern (`t`), a mood, and three replies (`r`). Copy one, change the pattern and the replies, save.
@@ -46,5 +39,3 @@ When you change `assets/style.css` or `assets/app.js`, bump the `?v=12` on their
 ## Share preview image
 
 When someone shares dionnawomack.net, apps show `img/og-image.jpg` (1200x630, the photo-free card). Apps cache previews, so a change can take a while to show; LinkedIn's Post Inspector (linkedin.com/post-inspector) forces a refresh.
-=======
->>>>>>> parent of 0e1ebda (Portfolio Update)
