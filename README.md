@@ -3,7 +3,7 @@
 Dionna Womack's portfolio. Plain HTML, CSS and JavaScript, no build step.
 
 - `index.html` is the site. Styles in `assets/style.css`, behaviour (including live Elara) in `assets/app.js`.
-- `demos/` holds the working projects: `elara/`, `pixelplay/`, `zine-room/`. They load their libraries from `vendor/`, so nothing depends on outside CDNs.
+- `demos/` holds the working projects: `elara/`, `pixelplay/`, `zine-room/`. They load their libraries from `assets/lib/` (not `vendor/`, which many .gitignore templates skip), so nothing depends on outside CDNs.
 - Fonts are self-hosted in `fonts/` (Fraunces and DM Sans, SIL Open Font License).
 
 ## Editing copy
@@ -38,4 +38,4 @@ When you change `assets/style.css` or `assets/app.js`, bump the `?v=12` on their
 
 ## Share preview image
 
-When someone shares dionnawomack.net, apps show `img/og-image.jpg` (1200x630, the version with your photo). To use the photo-free version instead, delete `og-image.jpg` and rename `og-image-generic.jpg` to `og-image.jpg`. Apps cache previews, so a change can take a while to show; LinkedIn's Post Inspector (linkedin.com/post-inspector) forces a refresh.
+When someone shares dionnawomack.net, apps show `img/og-image.jpg` (1200x630, the photo-free card). Apps cache previews, so a change can take a while to show; LinkedIn's Post Inspector (linkedin.com/post-inspector) forces a refresh.
